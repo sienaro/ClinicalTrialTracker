@@ -1,10 +1,17 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import { NavShell } from "@/components/NavShell";
 import "./globals.css";
 
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "Clinical Trial Tracker (demo)",
+  title: "Clinical Trial Tracker",
   description:
-    "Class project: explore recruiting trials with synthetic profiles. Not medical advice.",
+    "Search recruiting clinical trials on ClinicalTrials.gov with optional local context files and exploratory match ranking. Not medical advice.",
 };
 
 export default function RootLayout({
@@ -14,7 +21,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="min-h-screen antialiased">{children}</body>
+      <body className={`${inter.className} min-h-screen antialiased`}>
+        <NavShell>{children}</NavShell>
+      </body>
     </html>
   );
 }

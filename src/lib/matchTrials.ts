@@ -6,6 +6,11 @@ export type ScoredTrial = TrialSummary & {
   score: number;
   label: MatchLabel;
   reasons: string[];
+  /** Derived from eligibility text + profile; used for optional client-side filtering (not official eligibility). */
+  matchSignals: {
+    sexConflict: boolean;
+    ageLikelyOutside: boolean;
+  };
 };
 
 function tokenize(text: string): Set<string> {
@@ -49,14 +54,33 @@ function sexMentionConflicts(text: string, sex: Exclude<Sex, "any">): boolean {
   return /\bmales?\b|\bmen\b|\bboys?\b/.test(lower) && !/\bfemale\b|\bwomen\b|\bgirls?\b/.test(lower);
 }
 
+/** When we can parse an age rule from eligibility text, is the patient clearly outside it? */
+function ageLikelyOutsideWindow(age: number, eligibilityText: string): boolean {
+  const win = ageWindowFromText(eligibilityText);
+  if (win.min !== undefined && win.max !== undefined) {
+    return age < win.min || age > win.max;
+  }
+  if (win.min !== undefined) return age < win.min;
+  if (win.max !== undefined) return age > win.max;
+  return false;
+}
+
 export function scoreTrials(
   trials: TrialSummary[],
-  profile: { condition: string; age?: number; sex: Sex },
+  profile: { condition: string; age?: number; sex: Sex; referenceText?: string },
 ): ScoredTrial[] {
   const condTokens = tokenize(profile.condition);
+  const refTokens = profile.referenceText?.trim() ? tokenize(profile.referenceText) : new Set<string>();
   const scored = trials.map((trial) => {
     const reasons: string[] = [];
     let score = 40;
+
+    const sexConflict =
+      profile.sex !== "any" && sexMentionConflicts(trial.eligibilityText, profile.sex as Exclude<Sex, "any">);
+    const ageLikelyOutside =
+      typeof profile.age === "number" &&
+      Number.isFinite(profile.age) &&
+      ageLikelyOutsideWindow(profile.age, trial.eligibilityText);
 
     const haystack = [
       trial.title,
@@ -76,6 +100,19 @@ export function scoreTrials(
       reasons.push(`Overlapping keywords between your condition and the trial text (${overlap}).`);
     } else {
       reasons.push("Few obvious keyword overlaps with your condition text.");
+    }
+
+    if (refTokens.size > 0) {
+      let refOverlap = 0;
+      for (const t of refTokens) {
+        if (trialTokens.has(t)) refOverlap += 1;
+      }
+      if (refOverlap > 0) {
+        score += Math.min(12, refOverlap * 2);
+        reasons.push(
+          `Additional overlap between uploaded or pasted reference text and this trial (${refOverlap} terms).`,
+        );
+      }
     }
 
     if (typeof profile.age === "number" && Number.isFinite(profile.age)) {
@@ -104,7 +141,7 @@ export function scoreTrials(
     }
 
     if (profile.sex !== "any") {
-      if (sexMentionConflicts(trial.eligibilityText, profile.sex)) {
+      if (sexConflict) {
         score -= 25;
         reasons.push("Eligibility text mentions the other sex prominently; treat as a red flag for this demo.");
       } else {
@@ -118,7 +155,7 @@ export function scoreTrials(
     if (score >= 62) label = "possible";
     if (score <= 35) label = "unlikely";
 
-    return { ...trial, score, label, reasons };
+    return { ...trial, score, label, reasons, matchSignals: { sexConflict, ageLikelyOutside } };
   });
 
   return scored.sort((a, b) => b.score - a.score);

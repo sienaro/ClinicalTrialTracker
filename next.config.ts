@@ -17,6 +17,13 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   // Avoid picking up an unrelated lockfile in a parent directory (e.g. $HOME/package-lock.json).
   outputFileTracingRoot: projectRoot,
+  async redirects() {
+    return [
+      { source: "/add/fhir", destination: "/fhir", permanent: true },
+      { source: "/add/pdf", destination: "/", permanent: true },
+      { source: "/add/manual", destination: "/", permanent: true },
+    ];
+  },
   async headers() {
     return [
       {
