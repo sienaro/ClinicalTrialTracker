@@ -1,0 +1,52 @@
+// Prisma schema — SQLite + email/password accounts for Clinical Trial Tracker.
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime     @default(now())
+  profile      Profile?
+  savedTrials  SavedTrial[]
+}
+
+model Profile {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  condition    String   @default("")
+  ageInput     String   @default("")
+  sex          String   @default("any")
+  sessionNotes String   @default("")
+  updatedAt    DateTime @updatedAt
+}
+
+model SavedTrial {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nctId           String
+  title           String
+  conditions      String   @default("[]") // JSON-encoded string[]
+  eligibilityText String   @default("")
+  url             String   @default("")
+  score           Int?
+  label           String?
+  reasons         String   @default("[]") // JSON-encoded string[]
+  status          String   @default("interested") // interested | contacted | applied
+  notes           String   @default("")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([userId, nctId])
+}

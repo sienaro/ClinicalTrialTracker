@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { NavShell } from "@/components/NavShell";
+import { Providers } from "@/components/Providers";
 import "./globals.css";
 
 const inter = Inter({
@@ -22,7 +23,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} min-h-screen antialiased`}>
-        <NavShell>{children}</NavShell>
+        <Providers>
+          <NavShell>{children}</NavShell>
+        </Providers>
       </body>
     </html>
   );

@@ -65,6 +65,140 @@ export function normalizeStudy(study: unknown): TrialSummary | null {
   };
 }
 
+export type TrialLocation = {
+  facility?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  status?: string;
+};
+
+export type TrialContact = {
+  name?: string;
+  role?: string;
+  phone?: string;
+  email?: string;
+};
+
+export type TrialDetail = TrialSummary & {
+  officialTitle?: string;
+  briefSummary?: string;
+  detailedDescription?: string;
+  phases: string[];
+  studyType?: string;
+  enrollmentCount?: number;
+  startDate?: string;
+  completionDate?: string;
+  leadSponsor?: string;
+  interventions: string[];
+  minimumAge?: string;
+  maximumAge?: string;
+  sex?: string;
+  healthyVolunteers?: string;
+  locations: TrialLocation[];
+  contacts: TrialContact[];
+};
+
+function asNumber(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+export function normalizeStudyDetail(study: unknown): TrialDetail | null {
+  const base = normalizeStudy(study);
+  if (!base) return null;
+
+  const root = asRecord(study);
+  const protocol = asRecord(root?.protocolSection);
+  const identification = asRecord(protocol?.identificationModule);
+  const description = asRecord(protocol?.descriptionModule);
+  const design = asRecord(protocol?.designModule);
+  const eligibility = asRecord(protocol?.eligibilityModule);
+  const sponsor = asRecord(protocol?.sponsorCollaboratorsModule);
+  const arms = asRecord(protocol?.armsInterventionsModule);
+  const contactsLocations = asRecord(protocol?.contactsLocationsModule);
+  const status = asRecord(protocol?.statusModule);
+
+  const phasesRaw = asStringArray(design?.phases);
+  const enrollment = asRecord(design?.enrollmentInfo);
+
+  const interventionsRaw = Array.isArray(arms?.interventions) ? arms!.interventions : [];
+  const interventions = interventionsRaw
+    .map((iv) => {
+      const r = asRecord(iv);
+      const name = asString(r?.name);
+      const type = asString(r?.type);
+      return name ? (type ? `${name} (${type.toLowerCase()})` : name) : undefined;
+    })
+    .filter((s): s is string => Boolean(s));
+
+  const locationsRaw = Array.isArray(contactsLocations?.locations) ? contactsLocations!.locations : [];
+  const locations: TrialLocation[] = locationsRaw.slice(0, 50).map((loc) => {
+    const r = asRecord(loc);
+    return {
+      facility: asString(r?.facility),
+      city: asString(r?.city),
+      state: asString(r?.state),
+      country: asString(r?.country),
+      status: asString(r?.status),
+    };
+  });
+
+  const contactsRaw = Array.isArray(contactsLocations?.centralContacts) ? contactsLocations!.centralContacts : [];
+  const contacts: TrialContact[] = contactsRaw.slice(0, 10).map((c) => {
+    const r = asRecord(c);
+    return {
+      name: asString(r?.name),
+      role: asString(r?.role),
+      phone: asString(r?.phone),
+      email: asString(r?.email),
+    };
+  });
+
+  const startStruct = asRecord(status?.startDateStruct);
+  const completionStruct = asRecord(status?.completionDateStruct);
+
+  return {
+    ...base,
+    officialTitle: asString(identification?.officialTitle),
+    briefSummary: asString(description?.briefSummary),
+    detailedDescription: asString(description?.detailedDescription),
+    phases: phasesRaw,
+    studyType: asString(design?.studyType),
+    enrollmentCount: asNumber(enrollment?.count),
+    startDate: asString(startStruct?.date),
+    completionDate: asString(completionStruct?.date),
+    leadSponsor: asString(asRecord(sponsor?.leadSponsor)?.name),
+    interventions,
+    minimumAge: asString(eligibility?.minimumAge),
+    maximumAge: asString(eligibility?.maximumAge),
+    sex: asString(eligibility?.sex),
+    healthyVolunteers:
+      typeof eligibility?.healthyVolunteers === "boolean"
+        ? eligibility.healthyVolunteers
+          ? "Accepts healthy volunteers"
+          : "No healthy volunteers"
+        : undefined,
+    locations,
+    contacts,
+  };
+}
+
+export async function fetchStudyDetail(nctId: string): Promise<TrialDetail | null> {
+  const clean = nctId.trim().toUpperCase();
+  if (!/^NCT\d{4,}$/.test(clean)) return null;
+  const res = await fetch(`${CT_BASE}/${clean}`, {
+    headers: {
+      Accept: "application/json",
+      "User-Agent": "ClinicalTrialTracker-class-demo/0.1 (educational; contact: course)",
+    },
+    next: { revalidate: 0 },
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`ClinicalTrials.gov returned ${res.status}`);
+  const json: unknown = await res.json();
+  return normalizeStudyDetail(json);
+}
+
 export function buildStudiesUrl(params: TrialSearchRequest): string {
   const url = new URL(CT_BASE);
   const trimmed = params.condition.trim();

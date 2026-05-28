@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useSession, signOut } from "next-auth/react";
 
 const link =
   "rounded-md px-2.5 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900";
@@ -9,9 +12,13 @@ type SiteNavProps = {
 };
 
 export function SiteNav({ pathname }: SiteNavProps) {
+  const { data: session, status } = useSession();
   const isHome = pathname === "/";
   const isFhir = pathname === "/fhir" || pathname.startsWith("/fhir/");
   const isSearch = pathname === "/search" || pathname.startsWith("/search/");
+  const isSaved = pathname === "/saved" || pathname.startsWith("/saved/");
+  const isAccount = pathname === "/account" || pathname.startsWith("/account/");
+  const loggedIn = status === "authenticated";
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl">
@@ -32,17 +39,57 @@ export function SiteNav({ pathname }: SiteNavProps) {
             AI
           </span>
         </Link>
-        <nav className="flex flex-wrap items-center gap-1" aria-label="Primary">
-          <Link href="/" className={`${link} ${isHome ? linkActive : ""}`}>
-            Start
-          </Link>
-          <Link href="/fhir" className={`${link} ${isFhir ? linkActive : ""}`}>
-            Import
-          </Link>
-          <Link href="/search" className={`${link} ${isSearch ? linkActive : ""}`}>
-            Search
-          </Link>
-        </nav>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <nav className="flex flex-wrap items-center gap-1" aria-label="Primary">
+            <Link href="/" className={`${link} ${isHome ? linkActive : ""}`}>
+              Start
+            </Link>
+            <Link href="/fhir" className={`${link} ${isFhir ? linkActive : ""}`}>
+              Import
+            </Link>
+            <Link href="/search" className={`${link} ${isSearch ? linkActive : ""}`}>
+              Search
+            </Link>
+            {loggedIn ? (
+              <Link href="/saved" className={`${link} ${isSaved ? linkActive : ""}`}>
+                Saved
+              </Link>
+            ) : null}
+          </nav>
+
+          <div className="flex items-center gap-2 border-l border-slate-200 pl-2">
+            {loggedIn ? (
+              <>
+                <Link
+                  href="/account"
+                  className={`hidden max-w-[160px] truncate rounded-md px-2 py-1.5 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 sm:inline-block ${isAccount ? "bg-indigo-50 text-indigo-900 ring-1 ring-indigo-100" : ""}`}
+                >
+                  {session?.user?.email}
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => signOut({ callbackUrl: "/" })}
+                  className="rounded-md px-2.5 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+                >
+                  Log out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/login" className={link}>
+                  Log in
+                </Link>
+                <Link
+                  href="/signup"
+                  className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500"
+                >
+                  Sign up
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </header>
   );

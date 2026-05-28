@@ -1,11 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useId, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import type { Sex, TrialSummary } from "@/lib/clinicalTrialsGov";
 import { consumeProfilePrefill } from "@/lib/profilePrefill";
 import { scoreTrials, computeMatchSignals, type ScoredTrial, type MatchLabel } from "@/lib/matchTrials";
 import { ScoreRing } from "@/components/ScoreRing";
+import { HealthSummaryPanel } from "@/components/HealthSummaryPanel";
+import { useToast } from "@/components/Toast";
 
 type AiResult = { score: number; label: MatchLabel; reasons: string[] };
 
@@ -129,9 +132,21 @@ export function Dashboard() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
 
+  const { status: authStatus } = useSession();
+  const loggedIn = authStatus === "authenticated";
+  const toast = useToast();
+  const prefilledRef = useRef(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileSaved, setProfileSaved] = useState(false);
+
+  // nctId -> { id, status } for trials this user has saved.
+  const [savedMap, setSavedMap] = useState<Map<string, { id: string; status: string }>>(new Map());
+  const [savingNct, setSavingNct] = useState<string | null>(null);
+
   useEffect(() => {
     const prefill = consumeProfilePrefill();
     if (!prefill) return;
+    prefilledRef.current = true;
     if (prefill.condition !== undefined) setCondition(prefill.condition);
     if (prefill.ageInput !== undefined) setAgeInput(prefill.ageInput);
     if (prefill.sex !== undefined) setSex(prefill.sex);
@@ -165,6 +180,139 @@ export function Dashboard() {
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Load the saved profile for logged-in users, unless a FHIR import prefilled the form.
+  useEffect(() => {
+    if (authStatus !== "authenticated" || prefilledRef.current) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/profile");
+        if (!res.ok) return;
+        const data: unknown = await res.json();
+        const profile =
+          data && typeof data === "object" ? (data as { profile?: unknown }).profile : null;
+        if (cancelled || !profile || typeof profile !== "object") return;
+        const p = profile as { condition?: string; ageInput?: string; sex?: string; sessionNotes?: string };
+        if (p.condition) setCondition(p.condition);
+        if (p.ageInput) setAgeInput(p.ageInput);
+        if (p.sex === "male" || p.sex === "female" || p.sex === "any") setSex(p.sex);
+        if (p.sessionNotes) setSessionNotes(p.sessionNotes);
+      } catch {
+        /* ignore — fall back to defaults */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [authStatus]);
+
+  const saveProfile = useCallback(async () => {
+    setProfileSaving(true);
+    setProfileSaved(false);
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ condition, ageInput, sex, sessionNotes }),
+      });
+      if (res.ok) {
+        setProfileSaved(true);
+        toast("Profile saved to your account");
+        setTimeout(() => setProfileSaved(false), 2500);
+      } else {
+        toast("Could not save profile", "error");
+      }
+    } finally {
+      setProfileSaving(false);
+    }
+  }, [condition, ageInput, sex, sessionNotes, toast]);
+
+  // Load which trials are already saved (logged-in users).
+  useEffect(() => {
+    if (authStatus !== "authenticated") {
+      setSavedMap(new Map());
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/saved-trials");
+        if (!res.ok) return;
+        const data: unknown = await res.json();
+        const trials =
+          data && typeof data === "object" ? (data as { trials?: unknown }).trials : null;
+        if (cancelled || !Array.isArray(trials)) return;
+        const next = new Map<string, { id: string; status: string }>();
+        for (const t of trials) {
+          if (t && typeof t === "object") {
+            const row = t as { id?: string; nctId?: string; status?: string };
+            if (row.id && row.nctId) next.set(row.nctId, { id: row.id, status: row.status ?? "interested" });
+          }
+        }
+        setSavedMap(next);
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [authStatus]);
+
+  const saveTrial = useCallback(async (trial: ScoredTrial) => {
+    setSavingNct(trial.nctId);
+    try {
+      const res = await fetch("/api/saved-trials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nctId: trial.nctId,
+          title: trial.title,
+          conditions: trial.conditions,
+          eligibilityText: trial.eligibilityText,
+          url: trial.url,
+          score: trial.score,
+          label: trial.label,
+          reasons: trial.reasons,
+        }),
+      });
+      if (!res.ok) {
+        toast("Could not save trial", "error");
+        return;
+      }
+      const data = (await res.json()) as { id: string; status: string };
+      setSavedMap((prev) => new Map(prev).set(trial.nctId, { id: data.id, status: data.status }));
+      toast("Saved to your trials");
+    } finally {
+      setSavingNct(null);
+    }
+  }, [toast]);
+
+  const unsaveTrial = useCallback(async (nctId: string, id: string) => {
+    setSavingNct(nctId);
+    try {
+      const res = await fetch(`/api/saved-trials/${id}`, { method: "DELETE" });
+      if (!res.ok) return;
+      setSavedMap((prev) => {
+        const next = new Map(prev);
+        next.delete(nctId);
+        return next;
+      });
+      toast("Removed from saved", "info");
+    } finally {
+      setSavingNct(null);
+    }
+  }, [toast]);
+
+  const updateSavedStatus = useCallback(async (nctId: string, id: string, status: string) => {
+    setSavedMap((prev) => new Map(prev).set(nctId, { id, status }));
+    await fetch(`/api/saved-trials/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
   }, []);
 
   const age = useMemo(() => {
@@ -363,14 +511,42 @@ export function Dashboard() {
         </aside>
 
         <section className="grid gap-8 rounded-2xl border border-slate-200/80 bg-white/95 p-6 shadow-sm ring-1 ring-slate-900/5 backdrop-blur-sm sm:p-8">
-          <div className="flex flex-col gap-2 border-b border-slate-100 pb-6 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex flex-col gap-3 border-b border-slate-100 pb-6 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="text-lg font-semibold text-slate-900">Profile &amp; context</h2>
               <p className="mt-1 max-w-xl text-sm text-slate-600">
-                Used only in this tab to query the public registry and to score results locally. Clearing the tab clears
-                everything.
+                {loggedIn
+                  ? "Saved to your account so it's here next time. Used to query the registry and rank results."
+                  : "Used only in this tab to query the registry and rank results. Log in to save it to your account."}
               </p>
             </div>
+            {loggedIn ? (
+              <div className="flex items-center gap-2">
+                {profileSaved ? (
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Saved
+                  </span>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => void saveProfile()}
+                  disabled={profileSaving}
+                  className="inline-flex items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 px-3.5 py-2 text-sm font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {profileSaving ? "Saving…" : "Save to my profile"}
+                </button>
+              </div>
+            ) : (
+              <Link
+                href="/login?callbackUrl=/search"
+                className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+              >
+                Log in to save
+              </Link>
+            )}
           </div>
 
           <div className="grid gap-5 sm:grid-cols-2">
@@ -567,6 +743,8 @@ export function Dashboard() {
           ) : null}
         </section>
 
+        <HealthSummaryPanel condition={condition} ageInput={ageInput} sex={sex} sessionNotes={sessionNotes} />
+
         <section className="space-y-5">
           <div>
             <div className="flex flex-wrap items-center gap-3">
@@ -685,7 +863,9 @@ export function Dashboard() {
               </div>
 
               <ul className="grid gap-4">
-                {displayedTrials.map((trial, i) => (
+                {displayedTrials.map((trial, i) => {
+                  const saved = savedMap.get(trial.nctId);
+                  return (
                   <li
                     key={trial.nctId}
                     style={{ animationDelay: `${Math.min(i * 50, 400)}ms` }}
@@ -731,20 +911,29 @@ export function Dashboard() {
                         )}
                       </p>
                       <ul className="list-disc space-y-1 pl-5 marker:text-slate-400">
-                        {trial.reasons.map((r) => (
-                          <li key={r}>{r}</li>
+                        {trial.reasons.map((r, ri) => (
+                          <li key={`${trial.nctId}-${ri}`}>{r}</li>
                         ))}
                       </ul>
                     </div>
 
                     <div className="mt-5 flex flex-wrap items-center gap-4 border-t border-slate-100 pt-4">
+                      <Link
+                        href={`/trial/${trial.nctId}`}
+                        className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500"
+                      >
+                        View details &amp; ask AI
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </Link>
                       <a
                         className="inline-flex items-center gap-1 text-sm font-semibold text-indigo-700 underline decoration-indigo-200 underline-offset-2 hover:text-indigo-800"
                         href={trial.url}
                         target="_blank"
                         rel="noreferrer"
                       >
-                        View on ClinicalTrials.gov
+                        ClinicalTrials.gov
                         <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5h5m0 0v5m0-5L10 14M5 9v10h10" />
                         </svg>
@@ -757,9 +946,52 @@ export function Dashboard() {
                           {trial.eligibilityText || "No eligibility text returned."}
                         </pre>
                       </details>
+
+                      {loggedIn ? (
+                        <div className="ml-auto flex items-center gap-2">
+                          {saved ? (
+                            <>
+                              <select
+                                value={saved.status}
+                                onChange={(e) => void updateSavedStatus(trial.nctId, saved.id, e.target.value)}
+                                className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                                aria-label="Saved status"
+                              >
+                                <option value="interested">Interested</option>
+                                <option value="contacted">Contacted</option>
+                                <option value="applied">Applied</option>
+                              </select>
+                              <button
+                                type="button"
+                                onClick={() => void unsaveTrial(trial.nctId, saved.id)}
+                                disabled={savingNct === trial.nctId}
+                                className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-60"
+                              >
+                                <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+                                  <path d="M5 3a2 2 0 00-2 2v16l9-4 9 4V5a2 2 0 00-2-2H5z" />
+                                </svg>
+                                Saved
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => void saveTrial(trial)}
+                              disabled={savingNct === trial.nctId}
+                              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-indigo-300 hover:text-indigo-700 disabled:opacity-60"
+                            >
+                              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3-7 3V5z" />
+                              </svg>
+                              {savingNct === trial.nctId ? "Saving…" : "Save"}
+                            </button>
+                          )}
+                        </div>
+                      ) : null}
                     </div>
                   </li>
-                ))}
+                  );
+                })}
               </ul>
             </>
           )}
