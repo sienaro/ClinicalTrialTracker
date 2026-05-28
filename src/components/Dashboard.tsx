@@ -4,7 +4,10 @@ import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import Link from "next/link";
 import type { Sex, TrialSummary } from "@/lib/clinicalTrialsGov";
 import { consumeProfilePrefill } from "@/lib/profilePrefill";
-import { scoreTrials, type ScoredTrial } from "@/lib/matchTrials";
+import { scoreTrials, computeMatchSignals, type ScoredTrial, type MatchLabel } from "@/lib/matchTrials";
+import { ScoreRing } from "@/components/ScoreRing";
+
+type AiResult = { score: number; label: MatchLabel; reasons: string[] };
 
 const MAX_FILES = 10;
 const MAX_FILE_BYTES = 12 * 1024 * 1024;
@@ -20,9 +23,15 @@ function labelStyles(label: ScoredTrial["label"]) {
 }
 
 function labelText(label: ScoredTrial["label"]) {
-  if (label === "possible") return "Stronger keyword / age fit";
+  if (label === "possible") return "Stronger fit";
   if (label === "unlikely") return "Weaker fit";
-  return "Review on ClinicalTrials.gov";
+  return "Worth a review";
+}
+
+function labelAccent(label: ScoredTrial["label"]) {
+  if (label === "possible") return "border-l-emerald-400";
+  if (label === "unlikely") return "border-l-rose-400";
+  return "border-l-amber-400";
 }
 
 function formatBytes(n: number): string {
@@ -116,6 +125,10 @@ export function Dashboard() {
   const [hideAgeOutside, setHideAgeOutside] = useState(false);
   const [hideUnlikely, setHideUnlikely] = useState(false);
 
+  const [aiRanked, setAiRanked] = useState<Map<string, AiResult> | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
   useEffect(() => {
     const prefill = consumeProfilePrefill();
     if (!prefill) return;
@@ -128,19 +141,30 @@ export function Dashboard() {
     const q = (prefill.condition ?? "").trim();
     if (!auto || q.length < 2) return;
 
+    const rawAge = prefill.ageInput ? Number.parseInt(prefill.ageInput, 10) : undefined;
+    const prefillAge = rawAge !== undefined && Number.isFinite(rawAge) ? rawAge : undefined;
+
     void (async () => {
       setError(null);
       setLoading(true);
+      setAiRanked(null);
       try {
         const { studies, nextPageToken } = await postTrialSearchPage({ condition: q, pageSize: 20 });
         setTrials(studies);
         setNextPageToken(nextPageToken);
+        void rankWithAI(studies, {
+          condition: q,
+          age: prefillAge,
+          sex: (prefill.sex ?? "any") as Sex,
+          sessionNotes: prefill.sessionNotes?.trim() || undefined,
+        });
       } catch (e) {
         setError(e instanceof Error ? e.message : "Unknown error");
       } finally {
         setLoading(false);
       }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const age = useMemo(() => {
@@ -157,15 +181,23 @@ export function Dashboard() {
     return merged.slice(0, MAX_REFERENCE_CHARS);
   }, [attachments, sessionNotes]);
 
-  const scored = useMemo(() => {
+  const scored = useMemo<ScoredTrial[]>(() => {
     if (trials.length === 0) return [];
-    return scoreTrials(trials, {
-      condition,
-      age,
-      sex,
-      referenceText: referenceText.trim() || undefined,
-    });
-  }, [trials, condition, age, sex, referenceText]);
+    if (aiRanked && aiRanked.size > 0) {
+      return trials
+        .map((trial): ScoredTrial => {
+          const ai = aiRanked.get(trial.nctId);
+          const matchSignals = computeMatchSignals(trial, { age, sex });
+          if (ai) {
+            return { ...trial, score: ai.score, label: ai.label, reasons: ai.reasons, matchSignals };
+          }
+          const [fb] = scoreTrials([trial], { condition, age, sex });
+          return fb!;
+        })
+        .sort((a, b) => b.score - a.score);
+    }
+    return scoreTrials(trials, { condition, age, sex, referenceText: referenceText.trim() || undefined });
+  }, [trials, aiRanked, condition, age, sex, referenceText]);
 
   const displayedTrials = useMemo(() => {
     return scored.filter((t) => {
@@ -175,6 +207,12 @@ export function Dashboard() {
       return true;
     });
   }, [scored, hideSexConflict, hideAgeOutside, hideUnlikely]);
+
+  const stats = useMemo(() => {
+    const s = { possible: 0, unclear: 0, unlikely: 0 };
+    for (const t of displayedTrials) s[t.label] += 1;
+    return s;
+  }, [displayedTrials]);
 
   const ingestFiles = useCallback(
     async (list: FileList | File[]) => {
@@ -217,6 +255,40 @@ export function Dashboard() {
     [attachments.length],
   );
 
+  const rankWithAI = useCallback(
+    async (
+      trialsToRank: TrialSummary[],
+      profile: { condition: string; age?: number; sex: Sex; sessionNotes?: string },
+    ) => {
+      if (trialsToRank.length === 0) return;
+      setAiLoading(true);
+      setAiError(null);
+      try {
+        const res = await fetch("/api/trials/rank", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ profile, trials: trialsToRank }),
+        });
+        const data: unknown = await res.json();
+        if (!res.ok) {
+          const msg =
+            data && typeof data === "object" && "error" in data && typeof (data as { error: unknown }).error === "string"
+              ? (data as { error: string }).error
+              : "AI ranking failed";
+          setAiError(msg);
+          return;
+        }
+        const ranked = (data as { ranked: Array<{ nctId: string } & AiResult> }).ranked;
+        setAiRanked(new Map(ranked.map((r) => [r.nctId, { score: r.score, label: r.label, reasons: r.reasons }])));
+      } catch (e) {
+        setAiError(e instanceof Error ? e.message : "AI ranking unavailable");
+      } finally {
+        setAiLoading(false);
+      }
+    },
+    [],
+  );
+
   const onDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
@@ -229,6 +301,7 @@ export function Dashboard() {
   async function runSearch(opts?: { append?: boolean; pageToken?: string; conditionOverride?: string }) {
     setError(null);
     setLoading(true);
+    if (!opts?.append) setAiRanked(null);
     try {
       const q = (opts?.conditionOverride ?? condition).trim();
       const { studies, nextPageToken } = await postTrialSearchPage({
@@ -236,8 +309,10 @@ export function Dashboard() {
         pageSize: 20,
         pageToken: opts?.pageToken,
       });
-      setTrials((prev) => (opts?.append ? [...prev, ...studies] : studies));
+      const allStudies = opts?.append ? [...trials, ...studies] : studies;
+      setTrials(allStudies);
       setNextPageToken(nextPageToken);
+      void rankWithAI(allStudies, { condition: q, age, sex, sessionNotes: sessionNotes.trim() || undefined });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
     } finally {
@@ -478,18 +553,37 @@ export function Dashboard() {
           {error ? (
             <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-900">{error}</p>
           ) : null}
+
+          {aiLoading ? (
+            <p className="animate-pulse text-xs font-medium text-indigo-600">
+              Gemini AI is analyzing trial eligibility — results will update shortly…
+            </p>
+          ) : aiError ? (
+            <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+              AI ranking unavailable ({aiError}). Showing keyword-based results instead.
+            </p>
+          ) : aiRanked ? (
+            <p className="text-xs text-slate-500">Ranked by Gemini AI · {aiRanked.size} trials analyzed</p>
+          ) : null}
         </section>
 
         <section className="space-y-5">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">Ranked studies</h2>
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 className="text-lg font-semibold text-slate-900">Ranked studies</h2>
+              {aiRanked && !aiLoading ? (
+                <span className="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700 ring-1 ring-indigo-700/20">
+                  AI-ranked by Gemini
+                </span>
+              ) : null}
+            </div>
             <p className="mt-1 text-sm leading-relaxed text-slate-600">
               ClinicalTrials.gov is queried with your{" "}
               <span className="font-medium text-slate-800">main condition or topic only</span> (and recruiting
               status). Age, sex, and context notes—including the full FHIR problem list after import—are{" "}
-              <span className="font-medium text-slate-800">not</span> sent as separate registry filters. They are used on
-              this page to <span className="font-medium text-slate-800">re-rank and optionally filter</span> that
-              result set using simple checks on eligibility text. This is exploratory, not formal qualification.
+              <span className="font-medium text-slate-800">not</span> sent as separate registry filters. They are used
+              by Gemini AI to <span className="font-medium text-slate-800">re-rank and optionally filter</span> that
+              result set against eligibility criteria. This is exploratory, not formal qualification.
             </p>
           </div>
 
@@ -539,12 +633,33 @@ export function Dashboard() {
           ) : null}
 
           {scored.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-200 bg-white/60 px-6 py-12 text-center shadow-sm ring-1 ring-slate-900/5 backdrop-blur-sm">
-              <p className="text-sm font-medium text-slate-800">No studies to show yet</p>
-              <p className="mx-auto mt-2 max-w-md text-sm text-slate-600">
-                Run a search to load trials. Examples: &quot;breast cancer&quot;, &quot;COPD&quot;, &quot;major depressive disorder&quot;.
-              </p>
-            </div>
+            loading ? (
+              <ul className="grid gap-4">
+                {[0, 1, 2].map((i) => (
+                  <li key={i} className="rounded-2xl border border-slate-200/80 bg-white/80 p-6 shadow-sm ring-1 ring-slate-900/5">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="w-full space-y-3">
+                        <div className="skeleton h-3 w-24 rounded" />
+                        <div className="skeleton h-5 w-3/4 rounded" />
+                        <div className="skeleton h-3 w-1/2 rounded" />
+                      </div>
+                      <div className="skeleton h-16 w-16 shrink-0 rounded-full" />
+                    </div>
+                    <div className="mt-5 space-y-2">
+                      <div className="skeleton h-3 w-full rounded" />
+                      <div className="skeleton h-3 w-5/6 rounded" />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-slate-200 bg-white/60 px-6 py-12 text-center shadow-sm ring-1 ring-slate-900/5 backdrop-blur-sm">
+                <p className="text-sm font-medium text-slate-800">No studies to show yet</p>
+                <p className="mx-auto mt-2 max-w-md text-sm text-slate-600">
+                  Run a search to load trials. Examples: &quot;breast cancer&quot;, &quot;COPD&quot;, &quot;major depressive disorder&quot;.
+                </p>
+              </div>
+            )
           ) : displayedTrials.length === 0 ? (
             <div className="rounded-2xl border border-amber-200/80 bg-amber-50/60 px-6 py-10 text-center shadow-sm ring-1 ring-amber-900/5">
               <p className="text-sm font-medium text-amber-950">No trials match your filters</p>
@@ -553,58 +668,100 @@ export function Dashboard() {
               </p>
             </div>
           ) : (
-            <ul className="grid gap-4">
-              {displayedTrials.map((trial) => (
-                <li
-                  key={trial.nctId}
-                  className="rounded-2xl border border-slate-200/90 bg-white/95 p-6 shadow-sm ring-1 ring-slate-900/5 transition hover:ring-indigo-200/80"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div className="min-w-0 space-y-1">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{trial.nctId}</p>
-                      <h3 className="text-lg font-semibold leading-snug text-slate-900">{trial.title}</h3>
-                      <p className="text-sm text-slate-600">
-                        {trial.conditions.length > 0 ? trial.conditions.join(" · ") : "Conditions not listed"}
+            <>
+              <div className="flex flex-wrap gap-2.5">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-200">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  {stats.possible} stronger fit
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-900 ring-1 ring-amber-200">
+                  <span className="h-2 w-2 rounded-full bg-amber-500" />
+                  {stats.unclear} worth review
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-800 ring-1 ring-rose-200">
+                  <span className="h-2 w-2 rounded-full bg-rose-500" />
+                  {stats.unlikely} weaker fit
+                </span>
+              </div>
+
+              <ul className="grid gap-4">
+                {displayedTrials.map((trial, i) => (
+                  <li
+                    key={trial.nctId}
+                    style={{ animationDelay: `${Math.min(i * 50, 400)}ms` }}
+                    className={`animate-fade-in-up rounded-2xl border border-l-4 border-slate-200/90 bg-white/95 p-6 shadow-sm ring-1 ring-slate-900/5 transition hover:-translate-y-0.5 hover:shadow-md hover:ring-indigo-200/80 ${labelAccent(trial.label)}`}
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div className="min-w-0 space-y-1.5">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{trial.nctId}</p>
+                        <h3 className="text-lg font-semibold leading-snug text-slate-900">{trial.title}</h3>
+                        <p className="text-sm text-slate-600">
+                          {trial.conditions.length > 0 ? trial.conditions.join(" · ") : "Conditions not listed"}
+                        </p>
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${labelStyles(trial.label)}`}>
+                            {labelText(trial.label)}
+                          </span>
+                          {trial.matchSignals.ageLikelyOutside ? (
+                            <span className="rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-medium text-rose-700 ring-1 ring-rose-200">
+                              Age may be outside range
+                            </span>
+                          ) : null}
+                          {trial.matchSignals.sexConflict ? (
+                            <span className="rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-medium text-rose-700 ring-1 ring-rose-200">
+                              Sex mismatch hint
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+                      <ScoreRing score={trial.score} label={trial.label} />
+                    </div>
+
+                    <div className="mt-4 space-y-2 text-sm text-slate-700">
+                      <p className="flex items-center gap-1.5 font-medium text-slate-800">
+                        {aiRanked ? (
+                          <>
+                            <svg className="h-3.5 w-3.5 text-indigo-500" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+                              <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                            </svg>
+                            Why Gemini ranked this
+                          </>
+                        ) : (
+                          "Why this rank"
+                        )}
                       </p>
+                      <ul className="list-disc space-y-1 pl-5 marker:text-slate-400">
+                        {trial.reasons.map((r) => (
+                          <li key={r}>{r}</li>
+                        ))}
+                      </ul>
                     </div>
-                    <div className="flex flex-col items-end gap-2">
-                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${labelStyles(trial.label)}`}>
-                        {labelText(trial.label)}
-                      </span>
-                      <span className="text-xs font-medium text-slate-500">Match score · {trial.score}/100</span>
+
+                    <div className="mt-5 flex flex-wrap items-center gap-4 border-t border-slate-100 pt-4">
+                      <a
+                        className="inline-flex items-center gap-1 text-sm font-semibold text-indigo-700 underline decoration-indigo-200 underline-offset-2 hover:text-indigo-800"
+                        href={trial.url}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        View on ClinicalTrials.gov
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5h5m0 0v5m0-5L10 14M5 9v10h10" />
+                        </svg>
+                      </a>
+                      <details className="text-sm text-slate-700">
+                        <summary className="cursor-pointer font-semibold text-slate-800 hover:text-slate-950">
+                          Eligibility criteria
+                        </summary>
+                        <pre className="mt-3 max-h-52 overflow-auto whitespace-pre-wrap rounded-lg border border-slate-100 bg-slate-50/80 p-3 text-xs text-slate-800">
+                          {trial.eligibilityText || "No eligibility text returned."}
+                        </pre>
+                      </details>
                     </div>
-                  </div>
-
-                  <div className="mt-4 space-y-2 text-sm text-slate-700">
-                    <p className="font-medium text-slate-800">Why this rank</p>
-                    <ul className="list-disc space-y-1 pl-5 marker:text-slate-400">
-                      {trial.reasons.map((r) => (
-                        <li key={r}>{r}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="mt-5 flex flex-wrap items-center gap-4 border-t border-slate-100 pt-4">
-                    <a
-                      className="text-sm font-semibold text-indigo-700 underline decoration-indigo-200 underline-offset-2 hover:text-indigo-800"
-                      href={trial.url}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      View on ClinicalTrials.gov
-                    </a>
-                    <details className="text-sm text-slate-700">
-                      <summary className="cursor-pointer font-semibold text-slate-800 hover:text-slate-950">
-                        Eligibility criteria
-                      </summary>
-                      <pre className="mt-3 max-h-52 overflow-auto whitespace-pre-wrap rounded-lg border border-slate-100 bg-slate-50/80 p-3 text-xs text-slate-800">
-                        {trial.eligibilityText || "No eligibility text returned."}
-                      </pre>
-                    </details>
-                  </div>
-                </li>
-              ))}
-            </ul>
+                  </li>
+                ))}
+              </ul>
+            </>
           )}
         </section>
       </main>

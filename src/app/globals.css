@@ -3,13 +3,52 @@
 @tailwind utilities;
 
 :root {
-  --background: #f1f5f9;
+  --background: #f8fafc;
   --foreground: #0f172a;
 }
 
 body {
   color: var(--foreground);
-  background: radial-gradient(1200px 600px at 50% -10%, #e0e7ff 0%, transparent 55%),
-    radial-gradient(900px 500px at 100% 0%, #dbeafe 0%, transparent 45%), var(--background);
+  background:
+    radial-gradient(900px 500px at 12% -8%, #ddd6fe 0%, transparent 50%),
+    radial-gradient(1000px 600px at 88% -4%, #bfdbfe 0%, transparent 48%),
+    radial-gradient(800px 500px at 50% 110%, #c7d2fe 0%, transparent 60%),
+    var(--background);
   background-attachment: fixed;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #e2e8f0;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+  animation: shimmer 1.6s infinite;
 }

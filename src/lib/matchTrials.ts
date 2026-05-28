@@ -65,6 +65,19 @@ function ageLikelyOutsideWindow(age: number, eligibilityText: string): boolean {
   return false;
 }
 
+export function computeMatchSignals(
+  trial: TrialSummary,
+  profile: { age?: number; sex: Sex },
+): { sexConflict: boolean; ageLikelyOutside: boolean } {
+  const sexConflict =
+    profile.sex !== "any" && sexMentionConflicts(trial.eligibilityText, profile.sex as Exclude<Sex, "any">);
+  const ageLikelyOutside =
+    typeof profile.age === "number" &&
+    Number.isFinite(profile.age) &&
+    ageLikelyOutsideWindow(profile.age, trial.eligibilityText);
+  return { sexConflict, ageLikelyOutside };
+}
+
 export function scoreTrials(
   trials: TrialSummary[],
   profile: { condition: string; age?: number; sex: Sex; referenceText?: string },
