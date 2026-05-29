@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 
 const inputClass =
-  "w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100";
+  "w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100";
 
 function LoginForm() {
   const router = useRouter();
@@ -67,13 +67,13 @@ function LoginForm() {
             </label>
 
             {error ? (
-              <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-900">{error}</p>
+              <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900">{error}</p>
             ) : null}
 
             <button
               type="submit"
               disabled={loading}
-              className="mt-1 inline-flex min-h-[44px] items-center justify-center rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-1 inline-flex min-h-[44px] items-center justify-center rounded-lg bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? "Logging in…" : "Log in"}
             </button>
@@ -81,7 +81,7 @@ function LoginForm() {
 
           <p className="mt-5 text-sm text-slate-600">
             New here?{" "}
-            <Link className="font-semibold text-indigo-700 underline decoration-indigo-200 underline-offset-2" href="/signup">
+            <Link className="font-semibold text-rose-700 underline decoration-rose-200 underline-offset-2" href="/signup">
               Create an account
             </Link>
           </p>

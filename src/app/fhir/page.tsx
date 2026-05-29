@@ -7,7 +7,7 @@ import { extractFhirTrialPrefill, type FhirTrialPrefillExtraction } from "@/lib/
 import { saveProfilePrefill } from "@/lib/profilePrefill";
 
 const inputClass =
-  "w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100";
+  "w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100";
 
 type Step = "upload" | "confirm";
 
@@ -85,7 +85,7 @@ export default function FhirImportPage() {
       <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
         {step === "upload" ? (
           <>
-            <p className="text-xs font-semibold uppercase tracking-widest text-indigo-600">Import</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-rose-600">Import</p>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">FHIR JSON bundle</h1>
             <p className="mt-3 text-sm leading-relaxed text-slate-600">
               Upload or paste a FHIR R4-style JSON document (for example a Synthea patient bundle). Parsing runs in your
@@ -94,7 +94,7 @@ export default function FhirImportPage() {
             </p>
             <p className="mt-2 text-xs text-slate-500">
               Want to type a topic instead?{" "}
-              <Link className="font-medium text-indigo-700 underline decoration-indigo-200 underline-offset-2" href="/search">
+              <Link className="font-medium text-rose-700 underline decoration-rose-200 underline-offset-2" href="/search">
                 Open typed search
               </Link>{" "}
               ·{" "}
@@ -136,7 +136,7 @@ export default function FhirImportPage() {
                 />
                 <label
                   htmlFor={fileId}
-                  className="inline-flex cursor-pointer items-center justify-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500"
+                  className="inline-flex cursor-pointer items-center justify-center rounded-lg bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-500"
                 >
                   Upload .json
                 </label>
@@ -150,14 +150,14 @@ export default function FhirImportPage() {
               </div>
 
               {error ? (
-                <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-900">{error}</p>
+                <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900">{error}</p>
               ) : null}
             </div>
           </>
         ) : (
           lastExtraction && (
             <>
-              <p className="text-xs font-semibold uppercase tracking-widest text-indigo-600">Confirm</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-rose-600">Confirm</p>
               <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">Review extracted data</h1>
               <p className="mt-3 text-sm leading-relaxed text-slate-600">
                 This is what we will send to the typed search screen and use for the first ClinicalTrials.gov query. If
@@ -232,7 +232,7 @@ export default function FhirImportPage() {
                 </dl>
 
                 {error ? (
-                  <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-900">{error}</p>
+                  <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900">{error}</p>
                 ) : null}
 
                 <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:justify-between">
@@ -245,7 +245,7 @@ export default function FhirImportPage() {
                   </button>
                   <button
                     type="button"
-                    className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500"
+                    className="inline-flex items-center justify-center rounded-lg bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-500"
                     onClick={confirmAndSearch}
                   >
                     Confirm and search trials

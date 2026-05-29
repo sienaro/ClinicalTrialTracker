@@ -21,7 +21,7 @@ const TEXT_EXTENSIONS = new Set([".txt", ".md", ".markdown", ".csv", ".tsv", ".j
 
 function labelStyles(label: ScoredTrial["label"]) {
   if (label === "possible") return "bg-emerald-50 text-emerald-900 ring-1 ring-emerald-200/80";
-  if (label === "unlikely") return "bg-rose-50 text-rose-900 ring-1 ring-rose-200/80";
+  if (label === "unlikely") return "bg-red-50 text-red-900 ring-1 ring-red-200/80";
   return "bg-amber-50 text-amber-950 ring-1 ring-amber-200/80";
 }
 
@@ -33,7 +33,7 @@ function labelText(label: ScoredTrial["label"]) {
 
 function labelAccent(label: ScoredTrial["label"]) {
   if (label === "possible") return "border-l-emerald-400";
-  if (label === "unlikely") return "border-l-rose-400";
+  if (label === "unlikely") return "border-l-red-400";
   return "border-l-amber-400";
 }
 
@@ -74,7 +74,7 @@ async function readAttachment(file: File): Promise<Pick<Attachment, "kind" | "ex
 }
 
 const inputClass =
-  "w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100";
+  "w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100";
 
 async function postTrialSearchPage(params: {
   condition: string;
@@ -474,17 +474,17 @@ export function Dashboard() {
     <div className="min-h-screen">
       <div className="border-b border-slate-200/80 bg-white/70 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl flex-col gap-1 px-4 py-8 sm:px-6">
-          <p className="text-xs font-semibold uppercase tracking-widest text-indigo-600">Clinical research</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-rose-600">Clinical research</p>
           <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
             Clinical Trial Tracker
           </h1>
           <p className="max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">
             Search recruiting studies from{" "}
-            <a className="font-medium text-indigo-700 underline decoration-indigo-300 underline-offset-2" href="https://clinicaltrials.gov/">
+            <a className="font-medium text-rose-700 underline decoration-rose-300 underline-offset-2" href="https://clinicaltrials.gov/">
               ClinicalTrials.gov
             </a>
             . Everything below stays in this browser tab. To start from a FHIR file instead, use{" "}
-            <Link className="font-medium text-indigo-700 underline decoration-indigo-300 underline-offset-2" href="/fhir">
+            <Link className="font-medium text-rose-700 underline decoration-rose-300 underline-offset-2" href="/fhir">
               Import
             </Link>{" "}
             or{" "}
@@ -501,7 +501,7 @@ export function Dashboard() {
           <p className="font-medium text-slate-900">Important</p>
           <p className="mt-2 text-slate-600">
             This tool does not provide medical advice. Official eligibility criteria always live on{" "}
-            <a className="font-medium text-indigo-700 underline decoration-indigo-200 underline-offset-2" href="https://clinicaltrials.gov/">
+            <a className="font-medium text-rose-700 underline decoration-rose-200 underline-offset-2" href="https://clinicaltrials.gov/">
               ClinicalTrials.gov
             </a>
             . Match scores are an exploratory heuristic to prioritize reading—not a determination of qualification.
@@ -534,7 +534,7 @@ export function Dashboard() {
                   type="button"
                   onClick={() => void saveProfile()}
                   disabled={profileSaving}
-                  className="inline-flex items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 px-3.5 py-2 text-sm font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center justify-center rounded-lg border border-rose-200 bg-rose-50 px-3.5 py-2 text-sm font-semibold text-rose-700 shadow-sm transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {profileSaving ? "Saving…" : "Save to my profile"}
                 </button>
@@ -648,12 +648,12 @@ export function Dashboard() {
               onDrop={onDrop}
               className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-10 text-center transition sm:py-12 ${
                 dragOver
-                  ? "border-indigo-400 bg-indigo-50/80 ring-2 ring-indigo-100"
-                  : "border-slate-200 bg-slate-50/50 hover:border-indigo-300 hover:bg-indigo-50/40"
+                  ? "border-rose-400 bg-rose-50/80 ring-2 ring-rose-100"
+                  : "border-slate-200 bg-slate-50/50 hover:border-rose-300 hover:bg-rose-50/40"
               }`}
             >
               <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white shadow ring-1 ring-slate-200">
-                <svg className="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                <svg className="h-5 w-5 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" />
                 </svg>
               </span>
@@ -661,7 +661,7 @@ export function Dashboard() {
               <span className="text-xs text-slate-500">
                 Click to browse · up to {MAX_FILES} files · {formatBytes(MAX_FILE_BYTES)} each
               </span>
-              <span className="mt-2 inline-flex rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm">
+              <span className="mt-2 inline-flex rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white shadow-sm">
                 Choose files
               </span>
             </label>
@@ -710,7 +710,7 @@ export function Dashboard() {
           <div className="flex flex-wrap gap-3 border-t border-slate-100 pt-6">
             <button
               type="button"
-              className="inline-flex min-h-[42px] items-center justify-center rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex min-h-[42px] items-center justify-center rounded-lg bg-rose-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={loading}
               onClick={() => void runSearch()}
             >
@@ -727,11 +727,11 @@ export function Dashboard() {
           </div>
 
           {error ? (
-            <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-900">{error}</p>
+            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900">{error}</p>
           ) : null}
 
           {aiLoading ? (
-            <p className="animate-pulse text-xs font-medium text-indigo-600">
+            <p className="animate-pulse text-xs font-medium text-rose-600">
               Gemini AI is analyzing trial eligibility — results will update shortly…
             </p>
           ) : aiError ? (
@@ -750,7 +750,7 @@ export function Dashboard() {
             <div className="flex flex-wrap items-center gap-3">
               <h2 className="text-lg font-semibold text-slate-900">Ranked studies</h2>
               {aiRanked && !aiLoading ? (
-                <span className="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700 ring-1 ring-indigo-700/20">
+                <span className="inline-flex items-center rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-medium text-rose-700 ring-1 ring-rose-700/20">
                   AI-ranked by Gemini
                 </span>
               ) : null}
@@ -776,7 +776,7 @@ export function Dashboard() {
                 <label className="flex cursor-pointer items-center gap-2">
                   <input
                     type="checkbox"
-                    className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                    className="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500"
                     checked={hideUnlikely}
                     onChange={(e) => setHideUnlikely(e.target.checked)}
                   />
@@ -785,7 +785,7 @@ export function Dashboard() {
                 <label className="flex cursor-pointer items-center gap-2">
                   <input
                     type="checkbox"
-                    className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                    className="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500"
                     checked={hideAgeOutside}
                     onChange={(e) => setHideAgeOutside(e.target.checked)}
                     disabled={age === undefined}
@@ -798,7 +798,7 @@ export function Dashboard() {
                 <label className="flex cursor-pointer items-center gap-2">
                   <input
                     type="checkbox"
-                    className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                    className="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500"
                     checked={hideSexConflict}
                     onChange={(e) => setHideSexConflict(e.target.checked)}
                     disabled={sex === "any"}
@@ -856,8 +856,8 @@ export function Dashboard() {
                   <span className="h-2 w-2 rounded-full bg-amber-500" />
                   {stats.unclear} worth review
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-800 ring-1 ring-rose-200">
-                  <span className="h-2 w-2 rounded-full bg-rose-500" />
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-800 ring-1 ring-red-200">
+                  <span className="h-2 w-2 rounded-full bg-red-500" />
                   {stats.unlikely} weaker fit
                 </span>
               </div>
@@ -869,7 +869,7 @@ export function Dashboard() {
                   <li
                     key={trial.nctId}
                     style={{ animationDelay: `${Math.min(i * 50, 400)}ms` }}
-                    className={`animate-fade-in-up rounded-2xl border border-l-4 border-slate-200/90 bg-white/95 p-6 shadow-sm ring-1 ring-slate-900/5 transition hover:-translate-y-0.5 hover:shadow-md hover:ring-indigo-200/80 ${labelAccent(trial.label)}`}
+                    className={`animate-fade-in-up rounded-2xl border border-l-4 border-slate-200/90 bg-white/95 p-6 shadow-sm ring-1 ring-slate-900/5 transition hover:-translate-y-0.5 hover:shadow-md hover:ring-rose-200/80 ${labelAccent(trial.label)}`}
                   >
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div className="min-w-0 space-y-1.5">
@@ -883,12 +883,12 @@ export function Dashboard() {
                             {labelText(trial.label)}
                           </span>
                           {trial.matchSignals.ageLikelyOutside ? (
-                            <span className="rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-medium text-rose-700 ring-1 ring-rose-200">
+                            <span className="rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-700 ring-1 ring-red-200">
                               Age may be outside range
                             </span>
                           ) : null}
                           {trial.matchSignals.sexConflict ? (
-                            <span className="rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-medium text-rose-700 ring-1 ring-rose-200">
+                            <span className="rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-700 ring-1 ring-red-200">
                               Sex mismatch hint
                             </span>
                           ) : null}
@@ -901,7 +901,7 @@ export function Dashboard() {
                       <p className="flex items-center gap-1.5 font-medium text-slate-800">
                         {aiRanked ? (
                           <>
-                            <svg className="h-3.5 w-3.5 text-indigo-500" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+                            <svg className="h-3.5 w-3.5 text-rose-500" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
                               <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
                             </svg>
                             Why Gemini ranked this
@@ -920,7 +920,7 @@ export function Dashboard() {
                     <div className="mt-5 flex flex-wrap items-center gap-4 border-t border-slate-100 pt-4">
                       <Link
                         href={`/trial/${trial.nctId}`}
-                        className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500"
+                        className="inline-flex items-center gap-1 rounded-lg bg-rose-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-500"
                       >
                         View details &amp; ask AI
                         <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
@@ -928,7 +928,7 @@ export function Dashboard() {
                         </svg>
                       </Link>
                       <a
-                        className="inline-flex items-center gap-1 text-sm font-semibold text-indigo-700 underline decoration-indigo-200 underline-offset-2 hover:text-indigo-800"
+                        className="inline-flex items-center gap-1 text-sm font-semibold text-rose-700 underline decoration-rose-200 underline-offset-2 hover:text-rose-800"
                         href={trial.url}
                         target="_blank"
                         rel="noreferrer"
@@ -954,7 +954,7 @@ export function Dashboard() {
                               <select
                                 value={saved.status}
                                 onChange={(e) => void updateSavedStatus(trial.nctId, saved.id, e.target.value)}
-                                className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                                className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-sm focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100"
                                 aria-label="Saved status"
                               >
                                 <option value="interested">Interested</option>
@@ -978,7 +978,7 @@ export function Dashboard() {
                               type="button"
                               onClick={() => void saveTrial(trial)}
                               disabled={savingNct === trial.nctId}
-                              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-indigo-300 hover:text-indigo-700 disabled:opacity-60"
+                              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-rose-300 hover:text-rose-700 disabled:opacity-60"
                             >
                               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3-7 3V5z" />

@@ -8,7 +8,7 @@ function statusStyle(status: string): string {
   if (s.includes("RECRUITING")) return "bg-emerald-50 text-emerald-800 ring-emerald-200";
   if (s.includes("COMPLETED")) return "bg-slate-100 text-slate-700 ring-slate-200";
   if (s.includes("TERMINATED") || s.includes("WITHDRAWN") || s.includes("SUSPENDED"))
-    return "bg-rose-50 text-rose-800 ring-rose-200";
+    return "bg-red-50 text-red-800 ring-red-200";
   return "bg-amber-50 text-amber-900 ring-amber-200";
 }
 
@@ -58,7 +58,7 @@ export default async function TrialDetailPage({ params }: { params: Promise<{ nc
               {prettyStatus(trial.overallStatus)}
             </span>
             {trial.phases.map((p) => (
-              <span key={p} className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700 ring-1 ring-indigo-200">
+              <span key={p} className="rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-semibold text-rose-700 ring-1 ring-rose-200">
                 {p.replace(/_/g, " ")}
               </span>
             ))}
@@ -179,7 +179,7 @@ export default async function TrialDetailPage({ params }: { params: Promise<{ nc
 
         <div className="border-t border-slate-100 pt-6">
           <a
-            className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-500"
             href={trial.url}
             target="_blank"
             rel="noreferrer"

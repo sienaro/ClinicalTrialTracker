@@ -11,7 +11,7 @@ type HealthSummary = {
 };
 
 const sparkle = (
-  <svg className="h-4 w-4 text-indigo-500" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+  <svg className="h-4 w-4 text-rose-500" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
     <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
   </svg>
 );
@@ -58,7 +58,7 @@ export function HealthSummaryPanel({
   }
 
   return (
-    <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50/60 to-white p-5 shadow-sm ring-1 ring-indigo-100 sm:p-6">
+    <div className="rounded-2xl border border-rose-100 bg-gradient-to-br from-rose-50/60 to-white p-5 shadow-sm ring-1 ring-rose-100 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           {sparkle}
@@ -68,7 +68,7 @@ export function HealthSummaryPanel({
           type="button"
           onClick={() => void generate()}
           disabled={loading}
-          className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex items-center justify-center rounded-lg bg-rose-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? "Summarizing…" : summary ? "Regenerate" : "Generate snapshot"}
         </button>
@@ -93,7 +93,7 @@ export function HealthSummaryPanel({
           <p>{summary.overview}</p>
           {summary.conditions?.length ? (
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">Identified conditions</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-rose-600">Identified conditions</p>
               <div className="mt-1.5 flex flex-wrap gap-1.5">
                 {summary.conditions.map((c) => (
                   <span key={c} className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-slate-700 ring-1 ring-slate-200">
@@ -108,8 +108,8 @@ export function HealthSummaryPanel({
           ) : null}
           {summary.considerations?.length ? (
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">Matching considerations</p>
-              <ul className="mt-1 list-disc space-y-1 pl-5 marker:text-indigo-300">
+              <p className="text-xs font-semibold uppercase tracking-wide text-rose-600">Matching considerations</p>
+              <ul className="mt-1 list-disc space-y-1 pl-5 marker:text-rose-300">
                 {summary.considerations.map((c, i) => (
                   <li key={i}>{c}</li>
                 ))}

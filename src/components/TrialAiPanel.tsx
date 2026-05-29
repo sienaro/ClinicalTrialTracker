@@ -18,7 +18,7 @@ const SUGGESTIONS = [
 ];
 
 const sparkle = (
-  <svg className="h-4 w-4 text-indigo-500" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+  <svg className="h-4 w-4 text-rose-500" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
     <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
   </svg>
 );
@@ -121,7 +121,7 @@ export function TrialAiPanel({
   return (
     <div className="grid gap-5 lg:grid-cols-2">
       {/* Plain-language explainer */}
-      <section className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50/60 to-white p-5 shadow-sm ring-1 ring-indigo-100 sm:p-6">
+      <section className="rounded-2xl border border-rose-100 bg-gradient-to-br from-rose-50/60 to-white p-5 shadow-sm ring-1 ring-rose-100 sm:p-6">
         <div className="flex items-center gap-2">
           {sparkle}
           <h2 className="text-base font-semibold text-slate-900">In plain language</h2>
@@ -139,13 +139,13 @@ export function TrialAiPanel({
           <div className="mt-4 space-y-3.5 text-sm leading-relaxed text-slate-700">
             <p>{explanation.summary}</p>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">Goal</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-rose-600">Goal</p>
               <p className="mt-0.5">{explanation.goal}</p>
             </div>
             {explanation.whatHappens?.length ? (
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">What participation involves</p>
-                <ul className="mt-1 list-disc space-y-1 pl-5 marker:text-indigo-300">
+                <p className="text-xs font-semibold uppercase tracking-wide text-rose-600">What participation involves</p>
+                <ul className="mt-1 list-disc space-y-1 pl-5 marker:text-rose-300">
                   {explanation.whatHappens.map((w, i) => (
                     <li key={i}>{w}</li>
                   ))}
@@ -153,7 +153,7 @@ export function TrialAiPanel({
               </div>
             ) : null}
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">Who it&apos;s for</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-rose-600">Who it&apos;s for</p>
               <p className="mt-0.5">{explanation.whoFor}</p>
             </div>
           </div>
@@ -178,7 +178,7 @@ export function TrialAiPanel({
                     key={s}
                     type="button"
                     onClick={() => void ask(s)}
-                    className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-indigo-300 hover:text-indigo-700"
+                    className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-rose-300 hover:text-rose-700"
                   >
                     {s}
                   </button>
@@ -192,7 +192,7 @@ export function TrialAiPanel({
               <div
                 className={
                   m.role === "user"
-                    ? "max-w-[85%] rounded-2xl rounded-br-sm bg-indigo-600 px-3.5 py-2 text-sm text-white"
+                    ? "max-w-[85%] rounded-2xl rounded-br-sm bg-rose-600 px-3.5 py-2 text-sm text-white"
                     : "max-w-[90%] rounded-2xl rounded-bl-sm bg-slate-100 px-3.5 py-2 text-sm text-slate-800"
                 }
               >
@@ -215,7 +215,7 @@ export function TrialAiPanel({
         </div>
 
         {chatError ? (
-          <p className="mt-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-900">{chatError}</p>
+          <p className="mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-900">{chatError}</p>
         ) : null}
 
         <form
@@ -229,12 +229,12 @@ export function TrialAiPanel({
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             placeholder="Type your question…"
-            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100"
           />
           <button
             type="submit"
             disabled={chatLoading || !question.trim()}
-            className="inline-flex shrink-0 items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex shrink-0 items-center justify-center rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Ask
           </button>

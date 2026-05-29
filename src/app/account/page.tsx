@@ -22,7 +22,7 @@ export default async function AccountPage() {
     <div className="min-h-screen">
       <div className="border-b border-slate-200/80 bg-white/70 backdrop-blur-md">
         <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-          <p className="text-xs font-semibold uppercase tracking-widest text-indigo-600">Account</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-rose-600">Account</p>
           <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Your account</h1>
         </div>
       </div>
@@ -72,7 +72,7 @@ export default async function AccountPage() {
           <div className="mt-4 flex flex-wrap gap-3">
             <a
               href="/api/account/export?format=json"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-500"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 4v12m0 0l-4-4m4 4l4-4" />

@@ -1,9 +1,9 @@
 import type { MatchLabel } from "@/lib/matchTrials";
 
 const COLORS: Record<MatchLabel, string> = {
-  possible: "#10b981",
-  unclear: "#f59e0b",
-  unlikely: "#f43f5e",
+  possible: "#10b981", // emerald — good match
+  unclear: "#f59e0b", // amber — medium
+  unlikely: "#ef4444", // red — weak (kept distinct from the rose brand)
 };
 
 export function ScoreRing({ score, label }: { score: number; label: MatchLabel }) {

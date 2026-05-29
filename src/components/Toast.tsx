@@ -34,7 +34,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               t.type === "success"
                 ? "bg-white text-slate-800 ring-emerald-200"
                 : t.type === "error"
-                  ? "bg-white text-rose-800 ring-rose-200"
+                  ? "bg-white text-red-800 ring-red-200"
                   : "bg-white text-slate-800 ring-slate-200"
             }`}
           >
@@ -43,7 +43,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             ) : t.type === "error" ? (
-              <svg className="h-4 w-4 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+              <svg className="h-4 w-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             ) : null}

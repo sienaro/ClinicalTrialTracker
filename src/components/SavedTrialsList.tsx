@@ -23,7 +23,7 @@ const STATUS_ORDER = ["interested", "contacted", "applied"] as const;
 type Status = (typeof STATUS_ORDER)[number];
 
 const STATUS_META: Record<Status, { title: string; blurb: string; dot: string; ring: string }> = {
-  interested: { title: "Interested", blurb: "Saved to look into", dot: "bg-indigo-500", ring: "ring-indigo-200" },
+  interested: { title: "Interested", blurb: "Saved to look into", dot: "bg-rose-500", ring: "ring-rose-200" },
   contacted: { title: "Contacted", blurb: "Reached out to the study team", dot: "bg-amber-500", ring: "ring-amber-200" },
   applied: { title: "Applied", blurb: "Submitted / screening", dot: "bg-emerald-500", ring: "ring-emerald-200" },
 };
@@ -86,7 +86,7 @@ export function SavedTrialsList({ initialTrials }: { initialTrials: SavedTrialVi
     <div className="min-h-screen">
       <div className="border-b border-slate-200/80 bg-white/70 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl flex-col gap-1 px-4 py-8 sm:px-6">
-          <p className="text-xs font-semibold uppercase tracking-widest text-indigo-600">Your pipeline</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-rose-600">Your pipeline</p>
           <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">Saved trials</h1>
           <p className="max-w-2xl text-sm leading-relaxed text-slate-600">
             Track trials you&apos;ve saved as they move from interested to contacted to applied. Add private notes for
@@ -105,7 +105,7 @@ export function SavedTrialsList({ initialTrials }: { initialTrials: SavedTrialVi
             </p>
             <Link
               href="/search"
-              className="mt-5 inline-flex items-center justify-center rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500"
+              className="mt-5 inline-flex items-center justify-center rounded-lg bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-500"
             >
               Find trials
             </Link>
@@ -173,7 +173,7 @@ export function SavedTrialsList({ initialTrials }: { initialTrials: SavedTrialVi
                                 value={noteDrafts[t.id] ?? ""}
                                 onChange={(e) => setNoteDrafts((prev) => ({ ...prev, [t.id]: e.target.value }))}
                                 placeholder="Questions for the study team, eligibility doubts, next steps…"
-                                className="min-h-[64px] w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                                className="min-h-[64px] w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100"
                               />
                               {dirty ? (
                                 <div className="flex items-center gap-3">
@@ -181,7 +181,7 @@ export function SavedTrialsList({ initialTrials }: { initialTrials: SavedTrialVi
                                     type="button"
                                     onClick={() => void saveNotes(t.id)}
                                     disabled={busyId === t.id}
-                                    className="self-start rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-500 disabled:opacity-60"
+                                    className="self-start rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-rose-500 disabled:opacity-60"
                                   >
                                     {busyId === t.id ? "Saving…" : "Save note"}
                                   </button>
@@ -202,7 +202,7 @@ export function SavedTrialsList({ initialTrials }: { initialTrials: SavedTrialVi
                                 <select
                                   value={t.status}
                                   onChange={(e) => void setStatus(t.id, e.target.value as Status)}
-                                  className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                                  className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-sm focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100"
                                 >
                                   <option value="interested">Interested</option>
                                   <option value="contacted">Contacted</option>
@@ -211,7 +211,7 @@ export function SavedTrialsList({ initialTrials }: { initialTrials: SavedTrialVi
                               </label>
                               <Link
                                 href={`/trial/${t.nctId}`}
-                                className="inline-flex items-center gap-1 text-sm font-semibold text-indigo-700 underline decoration-indigo-200 underline-offset-2 hover:text-indigo-800"
+                                className="inline-flex items-center gap-1 text-sm font-semibold text-rose-700 underline decoration-rose-200 underline-offset-2 hover:text-rose-800"
                               >
                                 Details &amp; AI
                                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
@@ -230,7 +230,7 @@ export function SavedTrialsList({ initialTrials }: { initialTrials: SavedTrialVi
                                 type="button"
                                 onClick={() => void remove(t.id)}
                                 disabled={busyId === t.id}
-                                className="ml-auto inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-rose-600 transition hover:bg-rose-50 disabled:opacity-60"
+                                className="ml-auto inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-60"
                               >
                                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 7h12M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m-7 0v12a1 1 0 001 1h6a1 1 0 001-1V7" />
