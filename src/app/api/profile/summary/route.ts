@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
   const age = String(body.age ?? body.ageInput ?? "").slice(0, 8);
   const sex = String(body.sex ?? "").slice(0, 16);
   const notes = String(body.sessionNotes ?? "").slice(0, MAX_NOTES);
+  const langInstruction = String(body.languageInstruction ?? "").slice(0, 400);
 
   if (!condition && !notes) {
     return NextResponse.json({ error: "Add a condition or context notes first." }, { status: 400 });
@@ -48,7 +49,7 @@ Return a JSON object with exactly these fields:
 - "demographics": one short sentence stating age/sex if known.
 - "considerations": array of 2-4 short, neutral factors that could affect clinical trial eligibility or matching (e.g., comorbidities, age band, treatment history) — only those supported by the input.
 
-Be faithful to the input; do not invent conditions. Return ONLY the raw JSON object, no markdown.`;
+Be faithful to the input; do not invent conditions. ${langInstruction} Return ONLY the raw JSON object, no markdown. JSON keys stay in English; only translate the string values.`;
 
   try {
     const summary = await generateJson<HealthSummary>(prompt);

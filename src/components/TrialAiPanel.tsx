@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useLanguage, languageInstruction } from "@/components/LanguageProvider";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 type Explanation = {
   summary: string;
@@ -34,6 +36,9 @@ export function TrialAiPanel({
   briefSummary: string;
   eligibilityText: string;
 }) {
+  const { language, readingLevel } = useLanguage();
+  const langInstr = languageInstruction(language, readingLevel);
+
   const [explanation, setExplanation] = useState<Explanation | null>(null);
   const [explLoading, setExplLoading] = useState(true);
   const [explError, setExplError] = useState<string | null>(null);
@@ -53,7 +58,7 @@ export function TrialAiPanel({
         const res = await fetch("/api/trials/explain", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title, briefSummary, eligibilityText }),
+          body: JSON.stringify({ title, briefSummary, eligibilityText, languageInstruction: langInstr }),
         });
         const data: unknown = await res.json();
         if (cancelled) return;
@@ -75,7 +80,7 @@ export function TrialAiPanel({
     return () => {
       cancelled = true;
     };
-  }, [nctId, title, briefSummary, eligibilityText]);
+  }, [nctId, title, briefSummary, eligibilityText, langInstr]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -99,6 +104,7 @@ export function TrialAiPanel({
           briefSummary,
           eligibilityText,
           history: messages.slice(-6),
+          languageInstruction: langInstr,
         }),
       });
       const data: unknown = await res.json();
@@ -119,7 +125,13 @@ export function TrialAiPanel({
   }
 
   return (
-    <div className="grid gap-5 lg:grid-cols-2">
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-end gap-2 rounded-xl border border-slate-200/70 bg-white/60 px-3 py-2 backdrop-blur">
+        <span className="mr-auto text-xs font-medium text-slate-500">Prefer another language or simpler wording?</span>
+        <LanguageSelector />
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-2">
       {/* Plain-language explainer */}
       <section className="rounded-2xl border border-rose-100 bg-gradient-to-br from-rose-50/60 to-white p-5 shadow-sm ring-1 ring-rose-100 sm:p-6">
         <div className="flex items-center gap-2">
@@ -243,6 +255,7 @@ export function TrialAiPanel({
           Answers come from this trial&apos;s text only and may be imperfect. Confirm with the study team.
         </p>
       </section>
+      </div>
     </div>
   );
 }

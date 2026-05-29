@@ -7,6 +7,8 @@ export type ProfilePrefill = {
   ageInput?: string;
   sex?: Sex;
   sessionNotes?: string;
+  location?: string;
+  radiusMiles?: number;
   /** When true, home dashboard runs one recruiting search after applying the rest of the prefill. */
   autoSearch?: boolean;
 };
@@ -35,6 +37,8 @@ export function consumeProfilePrefill(): ProfilePrefill | null {
     if (typeof o.ageInput === "string") out.ageInput = o.ageInput;
     if (o.sex === "any" || o.sex === "male" || o.sex === "female") out.sex = o.sex;
     if (typeof o.sessionNotes === "string") out.sessionNotes = o.sessionNotes;
+    if (typeof o.location === "string") out.location = o.location;
+    if (typeof o.radiusMiles === "number") out.radiusMiles = o.radiusMiles;
     if (typeof o.autoSearch === "boolean") out.autoSearch = o.autoSearch;
     return Object.keys(out).length > 0 ? out : null;
   } catch {

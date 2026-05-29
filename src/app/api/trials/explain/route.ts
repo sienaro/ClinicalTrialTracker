@@ -28,6 +28,7 @@ export async function POST(req: NextRequest) {
   const title = String(body.title ?? "").slice(0, 500);
   const briefSummary = String(body.briefSummary ?? "").slice(0, MAX_CHARS);
   const eligibilityText = String(body.eligibilityText ?? "").slice(0, MAX_CHARS);
+  const langInstruction = String(body.languageInstruction ?? "").slice(0, 400);
 
   if (!title && !briefSummary) {
     return NextResponse.json({ error: "Nothing to explain" }, { status: 400 });
@@ -47,7 +48,7 @@ Return a JSON object with exactly these fields:
 - "whatHappens": array of 2-4 short bullet strings describing what participation likely involves (visits, tests, treatment) — only if inferable, otherwise general.
 - "whoFor": one sentence describing, in plain terms, the kind of person this study is looking for.
 
-Be accurate and do not invent specifics not supported by the text. Return ONLY the raw JSON object, no markdown.`;
+Be accurate and do not invent specifics not supported by the text. ${langInstruction} Return ONLY the raw JSON object, no markdown. The JSON keys must stay in English; only the string values are translated.`;
 
   try {
     const data = await generateJson<ExplainResult>(prompt);

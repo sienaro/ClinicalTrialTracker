@@ -2,11 +2,14 @@
 
 import { SessionProvider } from "next-auth/react";
 import { ToastProvider } from "@/components/Toast";
+import { LanguageProvider } from "@/components/LanguageProvider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
-      <ToastProvider>{children}</ToastProvider>
+      <LanguageProvider>
+        <ToastProvider>{children}</ToastProvider>
+      </LanguageProvider>
     </SessionProvider>
   );
 }

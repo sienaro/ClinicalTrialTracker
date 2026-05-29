@@ -52,3 +52,18 @@ body {
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
   animation: shimmer 1.6s infinite;
 }
+
+@media print {
+  /* Hide app chrome and anything explicitly excluded from print. */
+  header,
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #ffffff !important;
+  }
+  .print-page {
+    box-shadow: none !important;
+    border: none !important;
+  }
+}

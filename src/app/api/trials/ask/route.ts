@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
   const title = String(body.title ?? "").slice(0, 500);
   const eligibilityText = String(body.eligibilityText ?? "").slice(0, MAX_CONTEXT);
   const briefSummary = String(body.briefSummary ?? "").slice(0, MAX_CONTEXT);
+  const langInstruction = String(body.languageInstruction ?? "").slice(0, 400);
 
   const historyRaw = Array.isArray(body.history) ? body.history : [];
   const history: ChatTurn[] = historyRaw
@@ -44,7 +45,8 @@ export async function POST(req: NextRequest) {
   const system = `You are a careful, friendly assistant that answers a patient's questions about ONE specific clinical trial, using only the trial information provided. Rules:
 - Ground every answer in the provided trial text. If the answer isn't in the text, say you don't see that detail and suggest contacting the study team.
 - Never give medical advice or tell the patient whether they personally qualify with certainty — explain what the criteria say and that only the study team can confirm.
-- Be concise (2-5 sentences). Plain language. No markdown headings.`;
+- Be concise (2-5 sentences). Plain language. No markdown headings.
+${langInstruction}`;
 
   const prompt = `TRIAL: ${title}
 

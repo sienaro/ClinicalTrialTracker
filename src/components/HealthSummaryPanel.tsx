@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Sex } from "@/lib/clinicalTrialsGov";
+import { useLanguage, languageInstruction } from "@/components/LanguageProvider";
 
 type HealthSummary = {
   overview: string;
@@ -27,6 +28,7 @@ export function HealthSummaryPanel({
   sex: Sex;
   sessionNotes: string;
 }) {
+  const { language, readingLevel } = useLanguage();
   const [summary, setSummary] = useState<HealthSummary | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +40,13 @@ export function HealthSummaryPanel({
       const res = await fetch("/api/profile/summary", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ condition, ageInput, sex, sessionNotes }),
+        body: JSON.stringify({
+          condition,
+          ageInput,
+          sex,
+          sessionNotes,
+          languageInstruction: languageInstruction(language, readingLevel),
+        }),
       });
       const data: unknown = await res.json();
       if (!res.ok) {

@@ -42,44 +42,63 @@ export function HomeChoice() {
 
         <div className="animate-fade-in-up mt-10 grid gap-6 sm:mt-12" style={{ animationDelay: "80ms" }}>
           <Link
-            href="/fhir"
+            href="/intake"
             className="group relative flex flex-col overflow-hidden rounded-2xl border border-rose-200 bg-white/90 p-6 shadow-md ring-1 ring-rose-100 backdrop-blur transition hover:-translate-y-0.5 hover:border-rose-400 hover:shadow-xl hover:shadow-rose-500/10 sm:p-8"
           >
             <span className="absolute right-0 top-0 h-24 w-24 -translate-y-8 translate-x-8 rounded-full bg-gradient-to-br from-rose-400/20 to-amber-400/20 blur-2xl transition group-hover:scale-150" />
             <span className="absolute right-4 top-4 rounded-full bg-gradient-to-r from-rose-600 to-amber-600 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white sm:text-xs">
               Recommended
             </span>
-            <span className="text-xs font-semibold uppercase tracking-wide text-rose-600">Primary path</span>
-            <h2 className="mt-1 text-xl font-semibold text-slate-900 sm:text-2xl">Import FHIR JSON</h2>
+            <span className="text-xs font-semibold uppercase tracking-wide text-rose-600">Easiest way to start</span>
+            <h2 className="mt-1 text-xl font-semibold text-slate-900 sm:text-2xl">Talk to the assistant</h2>
             <p className="mt-2 max-w-prose text-sm leading-relaxed text-slate-600">
-              Upload or paste a patient bundle (Synthea, EHR export, etc.). We extract conditions and demographics in
-              the tab, show you what we found for confirmation, then let Gemini rank recruiting trials.
+              Just describe your situation in your own words — in any language. The AI assistant asks a few quick
+              questions, builds your profile, and searches recruiting trials for you.
             </p>
             <span className="mt-6 inline-flex items-center text-sm font-semibold text-rose-700 group-hover:underline">
-              Continue to import
+              Start the conversation
               <svg className="ml-1 h-4 w-4 transition group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </span>
           </Link>
 
-          <Link
-            href="/search"
-            className="group flex flex-col rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm ring-1 ring-slate-900/5 backdrop-blur transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white hover:shadow-md sm:p-7"
-          >
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Alternative</span>
-            <h2 className="mt-1 text-lg font-semibold text-slate-900 sm:text-xl">Search by typing</h2>
-            <p className="mt-2 max-w-prose text-sm leading-relaxed text-slate-600">
-              Enter a condition or topic yourself, optional age and notes, and optional supporting text files for AI
-              match scoring.
-            </p>
-            <span className="mt-5 inline-flex items-center text-sm font-semibold text-slate-700 group-hover:underline">
-              Open typed search
-              <svg className="ml-1 h-4 w-4 transition group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </span>
-          </Link>
+          <div className="grid gap-6 sm:grid-cols-2">
+            <Link
+              href="/fhir"
+              className="group flex flex-col rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm ring-1 ring-slate-900/5 backdrop-blur transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white hover:shadow-md"
+            >
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">For your records</span>
+              <h2 className="mt-1 text-lg font-semibold text-slate-900 sm:text-xl">Import FHIR JSON</h2>
+              <p className="mt-2 max-w-prose text-sm leading-relaxed text-slate-600">
+                Upload or paste a patient bundle (Synthea, EHR export). We extract conditions and demographics, confirm,
+                then rank trials.
+              </p>
+              <span className="mt-5 inline-flex items-center text-sm font-semibold text-slate-700 group-hover:underline">
+                Continue to import
+                <svg className="ml-1 h-4 w-4 transition group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </span>
+            </Link>
+
+            <Link
+              href="/search"
+              className="group flex flex-col rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm ring-1 ring-slate-900/5 backdrop-blur transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white hover:shadow-md"
+            >
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Classic</span>
+              <h2 className="mt-1 text-lg font-semibold text-slate-900 sm:text-xl">Search by typing</h2>
+              <p className="mt-2 max-w-prose text-sm leading-relaxed text-slate-600">
+                Enter a condition yourself, with optional age, notes, and supporting files for AI match scoring.
+              </p>
+              <span className="mt-5 inline-flex items-center text-sm font-semibold text-slate-700 group-hover:underline">
+                Open typed search
+                <svg className="ml-1 h-4 w-4 transition group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </span>
+            </Link>
+          </div>
         </div>
 
         <div className="animate-fade-in-up mt-12 grid gap-4 sm:grid-cols-3" style={{ animationDelay: "160ms" }}>

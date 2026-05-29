@@ -178,17 +178,28 @@ export default async function TrialDetailPage({ params }: { params: Promise<{ nc
         ) : null}
 
         <div className="border-t border-slate-100 pt-6">
-          <a
-            className="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-500"
-            href={trial.url}
-            target="_blank"
-            rel="noreferrer"
-          >
-            View full record on ClinicalTrials.gov
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5h5m0 0v5m0-5L10 14M5 9v10h10" />
-            </svg>
-          </a>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href={`/trial/${trial.nctId}/brief`}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-500"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              </svg>
+              Printable brief &amp; questions
+            </Link>
+            <a
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50"
+              href={trial.url}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Full record on ClinicalTrials.gov
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5h5m0 0v5m0-5L10 14M5 9v10h10" />
+              </svg>
+            </a>
+          </div>
           <p className="mt-4 text-xs leading-relaxed text-slate-500">
             This page summarizes public ClinicalTrials.gov data and AI-generated explanations. It is not medical advice
             or a determination of eligibility. Always confirm details with the study team.
