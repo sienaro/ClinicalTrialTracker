@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { fetchRecruitingStudies } from "@/lib/clinicalTrialsGov";
+import { geocodePlace } from "@/lib/geocode";
 
 const MAX_CONDITION_LEN = 120;
 const MIN_CONDITION_LEN = 2;
@@ -60,15 +61,36 @@ export async function POST(req: NextRequest) {
     pageToken = body.pageToken;
   }
 
+  // Optional location filtering: geocode a free-text place + radius into a geo filter.
+  let geo: { lat: number; lon: number; radiusMiles: number } | undefined;
+  let resolvedLocation: string | undefined;
+  const locationRaw = typeof body.location === "string" ? body.location.trim().slice(0, 120) : "";
+  if (locationRaw.length >= 2) {
+    let radiusMiles = 100;
+    if (typeof body.radiusMiles === "number" && Number.isFinite(body.radiusMiles)) {
+      radiusMiles = Math.min(1000, Math.max(5, Math.round(body.radiusMiles)));
+    }
+    const point = await geocodePlace(locationRaw);
+    if (!point) {
+      return NextResponse.json(
+        { error: `Could not find a location matching “${locationRaw}”. Try a city or “City, State”.` },
+        { status: 400 },
+      );
+    }
+    geo = { lat: point.lat, lon: point.lon, radiusMiles };
+    resolvedLocation = point.label;
+  }
+
   try {
     const { studies, nextPageToken } = await fetchRecruitingStudies({
       condition: trimmed,
       pageSize,
       pageToken,
+      geo,
     });
 
     return NextResponse.json(
-      { studies, nextPageToken },
+      { studies, nextPageToken, resolvedLocation },
       {
         status: 200,
         headers: {

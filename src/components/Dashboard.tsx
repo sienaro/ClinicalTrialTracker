@@ -37,6 +37,17 @@ function labelAccent(label: ScoredTrial["label"]) {
   return "border-l-amber-400";
 }
 
+function formatSites(sites: { city?: string; state?: string; country?: string }[]): string | null {
+  if (!sites || sites.length === 0) return null;
+  const labels = sites
+    .map((s) => [s.city, s.state ?? s.country].filter(Boolean).join(", "))
+    .filter(Boolean);
+  const unique = [...new Set(labels)];
+  if (unique.length === 0) return null;
+  const shown = unique.slice(0, 2).join(" · ");
+  return unique.length > 2 ? `${shown} · +${unique.length - 2} more` : shown;
+}
+
 function formatBytes(n: number): string {
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(n < 10 * 1024 ? 1 : 0)} KB`;
@@ -80,7 +91,9 @@ async function postTrialSearchPage(params: {
   condition: string;
   pageSize?: number;
   pageToken?: string;
-}): Promise<{ studies: TrialSummary[]; nextPageToken?: string }> {
+  location?: string;
+  radiusMiles?: number;
+}): Promise<{ studies: TrialSummary[]; nextPageToken?: string; resolvedLocation?: string }> {
   const res = await fetch("/api/trials/search", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -88,6 +101,8 @@ async function postTrialSearchPage(params: {
       condition: params.condition,
       pageSize: params.pageSize ?? 20,
       pageToken: params.pageToken,
+      location: params.location,
+      radiusMiles: params.radiusMiles,
     }),
   });
   const data: unknown = await res.json();
@@ -105,8 +120,14 @@ async function postTrialSearchPage(params: {
     typeof (data as { nextPageToken?: unknown }).nextPageToken === "string"
       ? (data as { nextPageToken: string }).nextPageToken
       : undefined;
-  return { studies: studies as TrialSummary[], nextPageToken: token };
+  const resolvedLocation =
+    typeof (data as { resolvedLocation?: unknown }).resolvedLocation === "string"
+      ? (data as { resolvedLocation: string }).resolvedLocation
+      : undefined;
+  return { studies: studies as TrialSummary[], nextPageToken: token, resolvedLocation };
 }
+
+const RADIUS_OPTIONS = [10, 25, 50, 100, 250, 500] as const;
 
 export function Dashboard() {
   const uploadId = useId();
@@ -115,6 +136,9 @@ export function Dashboard() {
   const [ageInput, setAgeInput] = useState("42");
   const [sex, setSex] = useState<Sex>("any");
   const [sessionNotes, setSessionNotes] = useState("");
+  const [location, setLocation] = useState("");
+  const [radiusMiles, setRadiusMiles] = useState(100);
+  const [resolvedLocation, setResolvedLocation] = useState<string | null>(null);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const [uploadHint, setUploadHint] = useState<string | null>(null);
@@ -151,6 +175,8 @@ export function Dashboard() {
     if (prefill.ageInput !== undefined) setAgeInput(prefill.ageInput);
     if (prefill.sex !== undefined) setSex(prefill.sex);
     if (prefill.sessionNotes !== undefined) setSessionNotes(prefill.sessionNotes);
+    if (prefill.location !== undefined) setLocation(prefill.location);
+    if (prefill.radiusMiles !== undefined) setRadiusMiles(prefill.radiusMiles);
 
     const auto = prefill.autoSearch === true;
     const q = (prefill.condition ?? "").trim();
@@ -158,13 +184,20 @@ export function Dashboard() {
 
     const rawAge = prefill.ageInput ? Number.parseInt(prefill.ageInput, 10) : undefined;
     const prefillAge = rawAge !== undefined && Number.isFinite(rawAge) ? rawAge : undefined;
+    const prefillLoc = prefill.location?.trim();
 
     void (async () => {
       setError(null);
       setLoading(true);
       setAiRanked(null);
       try {
-        const { studies, nextPageToken } = await postTrialSearchPage({ condition: q, pageSize: 20 });
+        const { studies, nextPageToken, resolvedLocation: resolved } = await postTrialSearchPage({
+          condition: q,
+          pageSize: 20,
+          location: prefillLoc || undefined,
+          radiusMiles: prefillLoc ? (prefill.radiusMiles ?? 100) : undefined,
+        });
+        setResolvedLocation(resolved ?? null);
         setTrials(studies);
         setNextPageToken(nextPageToken);
         void rankWithAI(studies, {
@@ -194,11 +227,20 @@ export function Dashboard() {
         const profile =
           data && typeof data === "object" ? (data as { profile?: unknown }).profile : null;
         if (cancelled || !profile || typeof profile !== "object") return;
-        const p = profile as { condition?: string; ageInput?: string; sex?: string; sessionNotes?: string };
+        const p = profile as {
+          condition?: string;
+          ageInput?: string;
+          sex?: string;
+          sessionNotes?: string;
+          location?: string;
+          travelRadius?: number;
+        };
         if (p.condition) setCondition(p.condition);
         if (p.ageInput) setAgeInput(p.ageInput);
         if (p.sex === "male" || p.sex === "female" || p.sex === "any") setSex(p.sex);
         if (p.sessionNotes) setSessionNotes(p.sessionNotes);
+        if (p.location) setLocation(p.location);
+        if (typeof p.travelRadius === "number") setRadiusMiles(p.travelRadius);
       } catch {
         /* ignore — fall back to defaults */
       }
@@ -215,7 +257,7 @@ export function Dashboard() {
       const res = await fetch("/api/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ condition, ageInput, sex, sessionNotes }),
+        body: JSON.stringify({ condition, ageInput, sex, sessionNotes, location, travelRadius: radiusMiles }),
       });
       if (res.ok) {
         setProfileSaved(true);
@@ -227,7 +269,7 @@ export function Dashboard() {
     } finally {
       setProfileSaving(false);
     }
-  }, [condition, ageInput, sex, sessionNotes, toast]);
+  }, [condition, ageInput, sex, sessionNotes, location, radiusMiles, toast]);
 
   // Load which trials are already saved (logged-in users).
   useEffect(() => {
@@ -452,11 +494,15 @@ export function Dashboard() {
     if (!opts?.append) setAiRanked(null);
     try {
       const q = (opts?.conditionOverride ?? condition).trim();
-      const { studies, nextPageToken } = await postTrialSearchPage({
+      const loc = location.trim();
+      const { studies, nextPageToken, resolvedLocation: resolved } = await postTrialSearchPage({
         condition: q,
         pageSize: 20,
         pageToken: opts?.pageToken,
+        location: loc || undefined,
+        radiusMiles: loc ? radiusMiles : undefined,
       });
+      setResolvedLocation(resolved ?? null);
       const allStudies = opts?.append ? [...trials, ...studies] : studies;
       setTrials(allStudies);
       setNextPageToken(nextPageToken);
@@ -582,6 +628,37 @@ export function Dashboard() {
                 <option value="female">Female</option>
                 <option value="male">Male</option>
               </select>
+            </label>
+
+            <label className="grid gap-1.5 text-sm">
+              <span className="font-medium text-slate-800">Your location (optional)</span>
+              <input
+                className={inputClass}
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="e.g. Boston, MA"
+                autoComplete="off"
+              />
+              <span className="text-xs text-slate-500">Leave blank to search nationwide.</span>
+            </label>
+
+            <label className="grid gap-1.5 text-sm">
+              <span className="font-medium text-slate-800">Willing to travel</span>
+              <select
+                className={inputClass}
+                value={radiusMiles}
+                onChange={(e) => setRadiusMiles(Number(e.target.value))}
+                disabled={!location.trim()}
+              >
+                {RADIUS_OPTIONS.map((r) => (
+                  <option key={r} value={r}>
+                    Within {r} miles
+                  </option>
+                ))}
+              </select>
+              <span className="text-xs text-slate-500">
+                {location.trim() ? "Only shows trials with a site in range." : "Add a location to enable."}
+              </span>
             </label>
 
             <label className="grid gap-1.5 text-sm sm:col-span-2">
@@ -754,6 +831,15 @@ export function Dashboard() {
                   AI-ranked by Gemini
                 </span>
               ) : null}
+              {resolvedLocation ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-emerald-200">
+                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Within {radiusMiles} mi of {resolvedLocation}
+                </span>
+              ) : null}
             </div>
             <p className="mt-1 text-sm leading-relaxed text-slate-600">
               ClinicalTrials.gov is queried with your{" "}
@@ -878,6 +964,15 @@ export function Dashboard() {
                         <p className="text-sm text-slate-600">
                           {trial.conditions.length > 0 ? trial.conditions.join(" · ") : "Conditions not listed"}
                         </p>
+                        {formatSites(trial.sites) ? (
+                          <p className="flex items-center gap-1 text-xs text-slate-500">
+                            <svg className="h-3.5 w-3.5 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            {formatSites(trial.sites)}
+                          </p>
+                        ) : null}
                         <div className="flex flex-wrap gap-1.5 pt-1">
                           <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${labelStyles(trial.label)}`}>
                             {labelText(trial.label)}

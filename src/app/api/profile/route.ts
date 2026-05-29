@@ -25,6 +25,8 @@ export async function GET() {
             ageInput: profile.ageInput,
             sex: profile.sex,
             sessionNotes: profile.sessionNotes,
+            location: profile.location,
+            travelRadius: profile.travelRadius,
           }
         : null,
     },
@@ -53,8 +55,13 @@ export async function PUT(req: NextRequest) {
   const sexRaw = String(body.sex ?? "any");
   const sex = SEXES.has(sexRaw) ? sexRaw : "any";
   const sessionNotes = String(body.sessionNotes ?? "").slice(0, MAX_NOTES);
+  const location = String(body.location ?? "").slice(0, 120);
+  let travelRadius = 100;
+  if (typeof body.travelRadius === "number" && Number.isFinite(body.travelRadius)) {
+    travelRadius = Math.min(1000, Math.max(5, Math.round(body.travelRadius)));
+  }
 
-  const data = { condition, ageInput, sex, sessionNotes };
+  const data = { condition, ageInput, sex, sessionNotes, location, travelRadius };
   await prisma.profile.upsert({
     where: { userId: session.user.id },
     update: data,

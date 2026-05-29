@@ -2,10 +2,24 @@ const CT_BASE = "https://clinicaltrials.gov/api/v2/studies";
 
 export type Sex = "any" | "male" | "female";
 
+export type GeoFilter = {
+  lat: number;
+  lon: number;
+  radiusMiles: number;
+};
+
 export type TrialSearchRequest = {
   condition: string;
   pageSize?: number;
   pageToken?: string;
+  geo?: GeoFilter;
+};
+
+/** Compact location for list display (city/state/country only). */
+export type TrialSite = {
+  city?: string;
+  state?: string;
+  country?: string;
 };
 
 export type TrialSummary = {
@@ -15,6 +29,8 @@ export type TrialSummary = {
   conditions: string[];
   eligibilityText: string;
   url: string;
+  /** A few sites for display; full list lives on the detail page. */
+  sites: TrialSite[];
 };
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -44,6 +60,7 @@ export function normalizeStudy(study: unknown): TrialSummary | null {
   const status = asRecord(protocol.statusModule);
   const conditions = asRecord(protocol.conditionsModule);
   const eligibility = asRecord(protocol.eligibilityModule);
+  const contactsLocations = asRecord(protocol.contactsLocationsModule);
 
   const nctId = asString(identification?.nctId);
   const briefTitle = asString(identification?.briefTitle);
@@ -55,6 +72,16 @@ export function normalizeStudy(study: unknown): TrialSummary | null {
   const title = briefTitle ?? officialTitle ?? nctId;
   const eligibilityText = asString(eligibility?.eligibilityCriteria) ?? "";
 
+  const locationsRaw = Array.isArray(contactsLocations?.locations) ? contactsLocations!.locations : [];
+  const sites: TrialSite[] = locationsRaw.slice(0, 60).map((loc) => {
+    const r = asRecord(loc);
+    return {
+      city: asString(r?.city),
+      state: asString(r?.state),
+      country: asString(r?.country),
+    };
+  });
+
   return {
     nctId,
     title,
@@ -62,6 +89,7 @@ export function normalizeStudy(study: unknown): TrialSummary | null {
     conditions: asStringArray(conditions?.conditions),
     eligibilityText,
     url: `https://clinicaltrials.gov/study/${nctId}`,
+    sites,
   };
 }
 
@@ -205,6 +233,10 @@ export function buildStudiesUrl(params: TrialSearchRequest): string {
   url.searchParams.set("query.cond", trimmed);
   url.searchParams.set("filter.overallStatus", "RECRUITING");
   url.searchParams.set("pageSize", String(params.pageSize ?? 20));
+  if (params.geo) {
+    const radius = Math.max(1, Math.min(1000, Math.round(params.geo.radiusMiles)));
+    url.searchParams.set("filter.geo", `distance(${params.geo.lat},${params.geo.lon},${radius}mi)`);
+  }
   if (params.pageToken) {
     url.searchParams.set("pageToken", params.pageToken);
   }

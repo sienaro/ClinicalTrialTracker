@@ -28,6 +28,8 @@ model Profile {
   ageInput     String   @default("")
   sex          String   @default("any")
   sessionNotes String   @default("")
+  location     String   @default("")
+  travelRadius Int      @default(100)
   updatedAt    DateTime @updatedAt
 }
 

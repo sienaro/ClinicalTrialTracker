@@ -4,13 +4,17 @@ A Next.js platform that matches patients with recruiting clinical trials from [C
 
 ## AI features
 
+- **Conversational intake agent** — describe your situation in plain words (in any language); the assistant interviews you, builds a structured profile, and launches the search.
 - **AI match ranking** — Gemini scores each recruiting trial (0–100) against the patient profile with plain-English reasons.
 - **AI health snapshot** — turns a condition + context notes (or an imported FHIR problem list) into a structured clinical overview.
 - **Plain-language explainer** — rewrites a trial's dense description into "what this is actually testing," who it's for, and what participation involves.
 - **Ask AI about this trial** — a per-trial Q&A chat grounded only in that study's eligibility text.
+- **Multilingual + plain-language mode** — every AI explanation, chat answer, and summary can render in 12 languages and at a simplified reading level.
+- **Printable patient brief** — a one-page, print/Save-as-PDF brief per trial with key facts, a plain-language summary, and AI-generated questions to ask your care team.
 
 ## Platform features
 
+- **Location & travel-distance filtering** — enter a city and how far you'll travel; results are limited to trials with a site within that radius (geocoded with the free Open-Meteo API, filtered via the ClinicalTrials.gov geo filter). Each result lists its sites.
 - **Rich trial detail page** (`/trial/[NCTID]`) — phase, status, enrollment, sponsor, interventions, locations, and contacts pulled live from the ClinicalTrials.gov API.
 - **Accounts** — email + password sign-in; profile and saved trials persist across visits.
 - **Saved-trial pipeline** (`/saved`) — track trials as Interested → Contacted → Applied with private notes.
