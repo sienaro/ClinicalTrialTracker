@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { EvalResult, EvalRow, AggregateMetrics, ReliabilityRow, MethodVerdict } from "@/eval/harness";
 
 function pct(x: number): string {
@@ -81,6 +81,16 @@ export default function EvaluationPage() {
   const [result, setResult] = useState<EvalResult | null>(null);
   const [reliability, setReliability] = useState<ReliabilityRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Optional auto-run via ?autorun=1 — used for the docs screenshot capture.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("autorun") === "1") {
+      void run();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function run() {
     setRunning(true);

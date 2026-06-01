@@ -15,7 +15,7 @@ export function ScoreRing({ score, label }: { score: number; label: MatchLabel }
 
   return (
     <div className="relative h-16 w-16 shrink-0" role="img" aria-label={`Match score ${score} out of 100`}>
-      <svg className="h-16 w-16 -rotate-90" viewBox="0 0 64 64">
+      <svg className="h-16 w-16 -rotate-90" viewBox="0 0 64 64" aria-hidden>
         <circle cx="32" cy="32" r={radius} fill="none" stroke="#e2e8f0" strokeWidth="6" />
         <circle
           cx="32"
