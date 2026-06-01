@@ -12,6 +12,10 @@ A Next.js platform that matches patients with recruiting clinical trials from [C
 - **Multilingual + plain-language mode** — every AI explanation, chat answer, and summary can render in 12 languages and at a simplified reading level.
 - **Printable patient brief** — a one-page, print/Save-as-PDF brief per trial with key facts, a plain-language summary, and AI-generated questions to ask your care team.
 
+## Evaluation
+
+Does Gemini actually beat the keyword baseline? Yes — and there's a live, runnable benchmark in the app at **`/evaluation`** that proves it (one click, ~5 seconds). Full methodology, results, limitations, and citations live in [`EVALUATION.md`](EVALUATION.md). Headline: on cases where the trial *explicitly excludes* what the patient has, the keyword method catches **0 of 4**; Gemini catches **4 of 4**.
+
 ## Platform features
 
 - **Location & travel-distance filtering** — enter a city and how far you'll travel; results are limited to trials with a site within that radius (geocoded with the free Open-Meteo API, filtered via the ClinicalTrials.gov geo filter). Each result lists its sites.

@@ -18,6 +18,7 @@ export function SiteNav({ pathname }: SiteNavProps) {
   const isSearch = pathname === "/search" || pathname.startsWith("/search/");
   const isSaved = pathname === "/saved" || pathname.startsWith("/saved/");
   const isAccount = pathname === "/account" || pathname.startsWith("/account/");
+  const isEval = pathname === "/evaluation" || pathname.startsWith("/evaluation/");
   const loggedIn = status === "authenticated";
 
   return (
@@ -56,6 +57,9 @@ export function SiteNav({ pathname }: SiteNavProps) {
                 Saved
               </Link>
             ) : null}
+            <Link href="/evaluation" className={`${link} ${isEval ? linkActive : ""}`}>
+              Eval
+            </Link>
           </nav>
 
           <div className="flex items-center gap-2 border-l border-slate-200 pl-2">
