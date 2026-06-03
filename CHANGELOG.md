@@ -37,7 +37,7 @@ The development journey of this project, oldest to newest. Each entry maps to on
 
 ## Phase 8 — Push for the rubric
 
-- **Pending push** · Major README polish with screenshots and a problem statement with citations, architecture diagram embedded in the README, `DEMO_SCRIPT.md` for the 90-second walkthrough, this `CHANGELOG.md`, and an accessibility / UX pass.
+- **Pending push** · Major README polish with screenshots and a problem statement with citations, architecture diagram embedded in the README, this `CHANGELOG.md`, and an accessibility / UX pass.
 
 ---
 

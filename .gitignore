@@ -46,3 +46,6 @@ prisma/*.db-journal
 .claude/settings.local.json
 
 /src/generated/prisma
+
+# Personal demo script (local only, do not publish)
+DEMO_SCRIPT.md
